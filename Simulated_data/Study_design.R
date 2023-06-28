@@ -1,4 +1,4 @@
-source("./Metadata/Settings.R")
+source("./Settings.R")
 ######################### ######################### ######################### ######################### ######################### 
 ## Design the simulation study for the ROC curve. To this end, use the VAFs from the simulated trees. Overall, this will generate a snvs-object, storing all snvs and a sample information sheet
 
