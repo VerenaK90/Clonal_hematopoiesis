@@ -43,16 +43,13 @@ trees <- foreach(sim.nr = 1:10) %dopar% {
                     mut.rate = mut.rate, mutation.mode="Binomial", driver.mode = driver.mode, t.driver = t.driver, 
                     mut.rate.D = mut.rate.D, tau = N/100)
 }
-save(trees, file="RData/Neutral_tree_25000_HSCs.RData")
+save(trees, file="RData/Simulated_data/Neutral_tree_25000_HSCs.RData")
 
 #################################################################################################################################################
 ############ Compute the VAFs by downsampling the trees to 10,000 cells
 
 for(sim.nr in 1:length(trees)){
-  print(sim.nr)
-  print("...")
-  pdf(paste0("Neutral_25000_HSCs_Simulation_nr_", sim.nr, ".pdf"))
-  par(mfrow=c(2,2))
+
   ## downsampling to 10000 cells
   sampled.trees <- lapply(trees[[sim.nr]], function(x){
     .simulate.sampling(x, min(10000, length(x$tip.class)))
@@ -64,7 +61,7 @@ for(sim.nr in 1:length(trees)){
     vafs
   })
   
-  save(vafs, file=paste0("./True_VAFs_neutral_25000_N_simnr_", sim.nr, ".RData")) ## pure VAFs, no sequencing simulated on top
+  save(vafs, file=paste0("./RData/Simulated_data/True_VAFs_neutral_25000_N_simnr_", sim.nr, ".RData")) ## pure VAFs, no sequencing simulated on top
   
 }
   

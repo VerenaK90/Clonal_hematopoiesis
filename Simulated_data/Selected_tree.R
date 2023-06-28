@@ -44,14 +44,12 @@ trees <- foreach(sim.nr = 1:10) %dopar% {
                     mut.rate.D = mut.rate.D, s.shape = s.shape, s.rate = s.rate,
                     tau = N/10, report.at.f = report.at.f)
 }
-save(trees, file=paste0("Selected_tree_25000_HSCs_t_s_20_sel_0.02.RData"))
+save(trees, file=paste0("RData/Simulated_data/Selected_tree_25000_HSCs_t_s_20_sel_0.02.RData"))
 
 
 #################################################################################################################################################
 ############ Compute the VAFs
 
-file <- list.files(pattern=paste0("RData/Selected_tree_25000"))
-load(file)
 
 for(sim.nr in 1:length(trees)){
   print("...")
@@ -67,6 +65,6 @@ for(sim.nr in 1:length(trees)){
     vafs
   })
   
-  save(vafs, file=paste0("./True_VAFs_selection_", N, "_N_simnr_", sim.nr, ".RData")) ## no sequencing simulated on top
+  save(vafs, file=paste0("./RData/Simulated_data/True_VAFs_selection_", N, "_N_simnr_", sim.nr, ".RData")) ## no sequencing simulated on top
 }
 
