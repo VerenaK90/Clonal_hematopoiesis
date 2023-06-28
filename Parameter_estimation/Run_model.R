@@ -15,7 +15,7 @@ age <- sample.info[patient.id,]$Age*365
 depth=sample.info[patient.id,paste("Depth", sort, sep=".")]
 
 load("./pyABC/Blood/SNVs_indels.RData")
-snvs <- match.arg(sort, c("snvs.cd34", "snvs.mnc", "snvs.mnc_minus_t", "snvs.pb"))
+snvs <- match.arg(sort, c("snvs.cd34", "snvs.mnc", "snvs.mnc_minus_t", "snvs.pb_gran"))
 snvs <- list(snvs.cd34[[patient.id]])
 
 use.sensitivity = F
