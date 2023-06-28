@@ -2,7 +2,7 @@ rm(list=ls())
 ####### load libraries
 library(deSolve)
 library(openxlsx)
-library(DriftAndSelection)
+library(FLORENCE)
 ###### load functions
 
 patient.id <- 'N1' # specify patient ID here
