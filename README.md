@@ -26,10 +26,11 @@ Download and install R v4.2.0 and the following packages on your computer:
 
 We have bundled R functions to model drift and selection in growing and homeostatic tissues in the R package FLORENCE. Please download and install from (https://github.com/VerenaK90/FLORENCE).
 
-Download and install python3 and pyABC von your computer
+Download and install python3 and pyABC von your computer.
 
 ## Variant allele frequencies shaped by drift and selection in homeostatic tissues
 
+FLORENCE predicts that drift and selection shape the variant allele frequency distribution distinctly. We predict VAF distributions for different parameter sets and time points in the script [Theoretical_model_performance.R](Analysis_and_figures/Theoretical_model_performance.R). The script also produces the figure panels **Figure 1c, f**, and **Figure S1a, b**.
 
 ## Simulated data
 
