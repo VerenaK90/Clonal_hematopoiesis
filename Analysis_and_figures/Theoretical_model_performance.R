@@ -1,0 +1,154 @@
+###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### 
+###### Illustrate the theoretical model behaviour
+
+source("./Settings.R")
+
+####################################################################################################################
+## Figure 1c: how does the VAF distribution shaped by neutral evolution change over time when analyzing different stem cell numbers and a constant division rate of 1/y?
+
+## set lambda and mu constant
+lambda = 1/365
+mu <- 10
+
+to.plot <- data.frame()
+
+for(N in c(10^3, 10^4, 10^5)){
+  for(age in seq(0, 100, 10)){ # simulate for varying agess
+    
+    to.plot <- rbind(to.plot, 
+                     data.frame(VAF=seq(0.05, 1, 0.01), Number_of_Variants = sapply(seq(0.05, 1, 0.01), function(x){
+                       mutational.burden(mu=mu, N=N, lambda.exp = 1, delta.exp = 0.2, lambda.ss = lambda, t.end = age*365, b = x*N)
+                     }), Age = age, Stem_cell_count=N))
+    
+  }
+}
+
+pdf(paste0(analysis.directory, "/Figures/Figure_1_c.pdf"), width=6.5, height=6.5, useDingbats = F)
+
+ggplot(to.plot, aes(x=1/VAF, y=Number_of_Variants, col=Age, group=Age)) + geom_point() + geom_line() +
+  scale_color_gradientn(colors=rev(hcl.colors(n = 7, palette="RdYlBu")), limits=c(0, 100))+
+  scale_y_continuous(  name="Cumulative # of SSNVs") + 
+  theme(aspect.ratio = 1, legend.position = "bottom") + facet_wrap(~Stem_cell_count, scale="free")
+
+dev.off()
+
+
+##############################################################################################################################################
+## Figure 1f: predicted selection over time - 25,000 stem cells that divide 10 times per year. A selected clone is introduced at 20 years and grows with a selective advantage of 0.98
+
+vafs.of.interest <- seq(0.01, 1, 0.005)
+
+## parameters
+lambda.exp <- 1
+delta.exp <- 0
+lambda.ss <- 10/365
+
+N <- 25000
+mu <- 1
+
+## selective advantage (as a reduction in cell death)
+s <- 0.98
+## age at which selective advantage is acquired
+t.s <- 20*365
+
+## simulate the burden with these parameters under selection
+simulated.burden.selection <- c()
+for(age in c(40,50, 52, 54, 56, 58, 60, 70)){
+  simulated.burden.selection <- rbind(simulated.burden.selection, 
+                                      data.frame(VAF= vafs.of.interest,
+                                                 SSNVs = sapply(vafs.of.interest, function(b){
+                                                   mutational.burden.with.selection(mu, N, lambda.exp, delta.exp, lambda.ss, t.end=age*365, t.s = t.s, s=s, b= b*N, min.clone.size = 0.01)
+                                                 }), Time=age, Clone.size =  min(N, exp(lambda.ss*(1-s)*(age*365-t.s)))))
+  
+}
+
+pdf(paste0(analysis.directory, "/Figures/Figure_1_f.pdf"), width=3.5, height=3.5, useDingbats = F)
+
+ggplot(simulated.burden.selection[simulated.burden.selection$VAF>=0.05,], aes(x=1/VAF, y=SSNVs, col=Time, group=Time)) +
+  geom_line() + 
+  scale_color_gradientn(colors=rev(hcl.colors(n = 7, palette="RdYlBu")))+
+  scale_y_continuous(name="Number of SSNVs")  + theme(aspect.ratio = 1)
+
+dev.off()
+
+##############################################################################################################################################
+## Figure S1a: Predicted selection for varying t.s but at the same clone size
+
+vafs.of.interest <- seq(0.01, 1, 0.005)
+
+## parameters
+lambda.exp <- 1
+delta.exp <- 0
+lambda.ss <- 10/365
+
+N <- 25000
+mu <- 1
+
+## selective advantage (as a reduction in cell death)
+s <- 0.98
+
+## simulate clones of equal size but with start and end at different time points; in total 45 years expansion, amounting to a clone size of 32%
+growth.time <- 45
+
+simulated.burden.selection <- c()
+for(age in c(50, 60, 70, 80, 90)){
+  simulated.burden.selection <- rbind(simulated.burden.selection, 
+                                      data.frame(VAF= vafs.of.interest,
+                                                 SSNVs = sapply(vafs.of.interest, function(b){
+                                                   mutational.burden.with.selection(mu, N, lambda.exp, delta.exp, lambda.ss, t.end=age*365, 
+                                                                                    t.s = (age-growth.time)*365, s=s, b= b*N, min.clone.size = 0.01)
+                                                 }), Time=(age-growth.time)*365, Clone.size =  min(N, exp(lambda.ss*(1-s)*(age*365-growth.time*365)))))
+  
+}
+
+
+pdf(paste0(analysis.directory, "/Figures/Figure_S1_a.pdf"), width=3.5, height=3.5, useDingbats = F)
+
+ggplot(simulated.burden.selection[simulated.burden.selection$VAF>=0.05,], aes(x=1/VAF, y=SSNVs, col=Time/365, group=Time)) +
+  geom_line() + 
+  scale_color_gradientn(colors=hcl.colors(n = 7, palette="Zissou1"))+
+  scale_y_continuous(name="Number of SSNVs")  + theme(aspect.ratio = 1) 
+
+dev.off()
+
+
+##############################################################################################################################################
+## Sigure S1b: Predicted selection for varying s but at the same age of 70 years
+
+vafs.of.interest <- seq(0.01, 1, 0.005)
+
+## parameters
+lambda.exp <- 1
+delta.exp <- 0
+lambda.ss <- 10/365
+
+N <- 25000
+mu <- 1
+
+t.s <- 30
+age <- 50
+
+## simulate the burden with these parameters under selection
+simulated.burden.selection <- c()
+for(s in seq(0.95, 0.99, 0.002)){
+  simulated.burden.selection <- rbind(simulated.burden.selection, 
+                                      data.frame(VAF= vafs.of.interest,
+                                                 SSNVs = sapply(vafs.of.interest, function(b){
+                                                   mutational.burden.with.selection(mu, N, lambda.exp, delta.exp, lambda.ss, t.end=age*365, t.s = t.s*365, s=s, b= b*N, min.clone.size = 0.01)
+                                                 }), s=s, Clone.size =  min(N, exp(lambda.ss*(1-s)*(age*365-t.s*365)))))
+  
+}
+simulated.burden.selection$growth_per_year <- (exp(lambda.ss*(1-simulated.burden.selection$s)*365)-1)*100
+
+
+pdf(paste0(analysis.directory, "/Figures/Figure_S1_b.pdf"), width=3.5, height=3.5, useDingbats = F)
+
+ggplot(simulated.burden.selection[simulated.burden.selection$VAF>=0.05,], aes(x=1/VAF, y=SSNVs, col=growth_per_year, group=1-s)) +
+  geom_line() + scale_x_continuous(breaks=c(5, 10, 20), labels = c("0.2", "0.1", "0.05"), 
+                                   name="Variant allele frequency distribution")+
+  scale_color_gradientn(colors=rev(hcl.colors(n = 7, palette="Zissou1")))+
+  scale_y_continuous(name="Number of SSNVs")  + theme(aspect.ratio = 1)
+
+dev.off()
+
+
