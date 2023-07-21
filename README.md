@@ -116,3 +116,12 @@ This script
 - compares the estimated age of the selected clones to the original studies (as whon in **Fig. 3h**).
 
 
+## Bulk WGS data
+
+### Data pre-processing
+
+### Parameter inference
+
+### Analysis and plots
+
+
