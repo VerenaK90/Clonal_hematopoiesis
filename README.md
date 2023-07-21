@@ -28,6 +28,8 @@ Download and install R v4.2.0 and the following packages on your computer:
   - RRphylo v2.7.0
   - ggplot2 v3.4.2
   - cgwtools v3.3
+  - ggVennDiagram v1.2.2
+  - ggbeeswarm v0.6.0
 
 We have bundled R functions to model drift and selection in growing and homeostatic tissues in the R package FLORENCE. Please download and install from (https://github.com/VerenaK90/FLORENCE).
 
@@ -68,13 +70,20 @@ Upon parameter estimation, the posterior probabilities were analyzed using the s
 
 We tested our model on pseudo-bulk WGS data from published single-cell WGS data of three studies, Lee-Six et al., Nature, 2018, Mitchell et al., Nature, 2022 and Fabre et al., 2022. In a first step, we generated the pseudo-bulks for each study as outlined in the following.
 
-### Mitchell et al.
+### Generation of pseudo-bulk data 
+
+#### Lee-Six et al.
+Download the data from https://doi.org/10.17632/yzjw2stk7f.1 and store them in ./Lee-Six_et_al/Caveman/. In addition, download the re-called data from our repository (**fill-in**) and store them in ./Lee-Six_et_al/Mutect_Strelka.
+
+The script (Pseudo_VAFs_LeeSix_et_al.R)[Data_preprocessing/Pseudo_VAFs_LeeSix_et_al.R] first compares the results of Caveman and Mutect/Strelka (**Fig. S2b,c**). It progresses to generate the pseudo-bulk data and to plot the VAF distributions as shown in **Fig. 3b, S2X**. It also plots the trees as shown in **Fig. 3a**. Finally, it stores two list objects containing the VAFs in (Caveman/SNVs.RData)[RData/Lee-Six_et_al/Caveman/SNVs.RData] and (Mutect_Strelka/SNVs.RData)[RData/Lee-Six_et_al/Mutect_Strelka/SNVs.RData].
+
+#### Mitchell et al.
 
 Download the data from https://data.mendeley.com/datasets/np54zjkvxr/1 and structure them like: ./Mitchell_et_al/*/.
 
-The script (Pseudo_VAFs_Mitchell_et_al.R)[Data_preprocessing/Pseudo_VAFs_Mitchell_et_al.R] generates the pseudo-bulk data and plots the VAF distributions as shown in **Fig. 3f,l**. It also plots the trees as shown in **Fig. 3e,k**. Finally, it stores a list object containing the VAFs for each sample in (SNVs.RData)[RData/Mitchell_et_al/SNVs.RData].
+The script (Pseudo_VAFs_Mitchell_et_al.R)[Data_preprocessing/Pseudo_VAFs_Mitchell_et_al.R] generates the pseudo-bulk data and plots the VAF distributions as shown in **Fig. 3f,l, Fig. S2d,e**. It also plots the trees as shown in **Fig. 3e,k**. Finally, it stores a list object containing the VAFs for each sample in (SNVs.RData)[RData/Mitchell_et_al/SNVs.RData].
 
-### Fabre et al.
+#### Fabre et al.
 Download the data of id2259 from [https://data.mendeley.com/datasets/np54zjkvxr/1](https://doi.org/10.6084/m9.figshare.15029118) and structure them like: ./Fabre_et_al/*/.
 
-The script (Pseudo_VAFs_Fabre_et_al.R)[Data_preprocessing/Pseudo_VAFs_Fabre_et_al.R] generates the pseudo-bulk data and plots the VAF distribution as shown in **Fig. XX**. It also plots the trees as shown in **Fig. XX**. Finally, it stores a list object containing the VAFs for each sample in (SNVs.RData)[RData/Fabre_et_al/SNVs.RData].
+The script (Pseudo_VAFs_Fabre_et_al.R)[Data_preprocessing/Pseudo_VAFs_Fabre_et_al.R] generates the pseudo-bulk data and plots the VAF distribution as shown in **Fig. XX**. It also plots the trees as shown in **Fig. XX**. Finally, it stores a list object containing the VAFs in (SNVs.RData)[RData/Fabre_et_al/SNVs.RData].
