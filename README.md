@@ -105,5 +105,14 @@ As with the simulated data, we used FLORENCE in conjunction with pyABC to estima
 
 In contrast to bulk WGS data sequenced at 90x, we here lowered the resolution a bit for the single-cell sequencing data. Moreover, we specify the number of sequenced cells and run the parameter estimation in single-cell mode, allowing for the simulation of single-cell sequencing and generation of pseudo-bulk data thereof. 
 
-
 ### Analysis and plots
+
+Once the parameter estimation has been finished, extract .csv-files from the .db files using the function abc-export. The fits can then be inspected using the script (Analysis_and_plots/Plot_fits_published_data.R)[Analysis_and_plots/Plot_fits_published_data.R].
+
+This script
+- plots model vs data for each sample (as shown in **Fig. 3b,f,l, Fig. SXX**)
+- classifies individual cases as neutrally evolving or selected (as shown in **Fig. 3c,g,m**)
+- computes highest density estimates for the parameters (as shown in **Fig. 3d,j,n,o**)
+- compares the estimated age of the selected clones to the original studies (as whon in **Fig. 3h**).
+
+
