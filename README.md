@@ -120,6 +120,8 @@ This script
 
 ### Data pre-processing
 
+We ran the model on the filtered SNVs (called using Strelka and Mutect2, see manuscript for details), which we stored, for convenience, in the list object (./RData/WGS/SNVs.RData). 
+
 ### Parameter inference
 
 As with the other data types, we used FLORENCE in conjunction with pyABC to estimate parameters. To re-run the analysis refer to the folder (Parameter_estimation) and modify Simulated_data/Run_model_WGS_data.R according to the sample specification, with emphasis on the following information
