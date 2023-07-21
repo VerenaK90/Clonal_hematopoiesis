@@ -90,7 +90,7 @@ The script (Pseudo_VAFs_Fabre_et_al.R)[Data_preprocessing/Pseudo_VAFs_Fabre_et_a
 
 ### Parameter inference
 
-As with the simulated data, we used FLORENCE in conjunction with pyABC to estimate parameters. To re-run the analysis refer to the folder (Parameter_estimation) and modify Simulated_data/Run_model_sim*x.R according to the sample specification, with emphasis on the following information
+As with the simulated data, we used FLORENCE in conjunction with pyABC to estimate parameters. To re-run the analysis refer to the folder (Parameter_estimation) and modify Simulated_data/Run_model_scWGS.R according to the sample specification, with emphasis on the following information
 
 - *patient.id*, the ID/name of the analyzed subject
 - *age*, the age (in days)
@@ -98,7 +98,7 @@ As with the simulated data, we used FLORENCE in conjunction with pyABC to estima
 - *depth*, the sequencing depth used to generate the data 
 - *min.vaf*, the smallest VAF in the data that is to be compared to the model. Defaults to 0.05; we used 0.01 due to the high pseudo-bulk coverage.
 - *min.clone.size*, the minimal clone size that can be detected by the model. Defaults to 0.05; we used 0.01 due to the high pseudo-bulk coverage.
-- *min.prior.size*, the lower limit of clone sizes scanned by the parameter estimation. Parameter setzs associated with clones < min.clone.size will be evaluated with the neutral model.0.001 due to the high pseudo-bulk coverage.
+- *min.prior.size*, the lower limit of clone sizes scanned by the parameter estimation. Parameter setzs associated with clones < min.clone.size will be evaluated with the neutral model. We used 0.001 due to the high pseudo-bulk coverage.
 - *ncells*, the number of sequenced cells
 - *seq.type*, has to be set to "sc", as we analyze pseudo-bulks from single-cells
 - *use.sensitivity* should sequencing sensitivity information be included in addition to binomial sampling? Defaults to F; if T, a matrix *false.negative.per.vaf* with columns corresponding to the measured VAFs and rows corresponding to individual measurements of the false negative rate at this VAF in addition to binomial noise must be provided. We used use.sensitivity=F.
@@ -121,6 +121,19 @@ This script
 ### Data pre-processing
 
 ### Parameter inference
+
+As with the other data types, we used FLORENCE in conjunction with pyABC to estimate parameters. To re-run the analysis refer to the folder (Parameter_estimation) and modify Simulated_data/Run_model_WGS_data.R according to the sample specification, with emphasis on the following information
+
+- *patient.id*, the ID/name of the analyzed subject
+- *sort*, the cell sort to be analyzed ("CD34", "MNC", "MNC_minus_T" or "PB_gran")
+- *age*, the age (in days)
+- *snvs*, a named list containing a data frame with VAFs and depths for each individual, as provided in RData/WGS_data/SNVs_indels.RData 
+- *depth*, the sequencing depth used to generate the data 
+- *min.vaf*, the smallest VAF in the data that is to be compared to the model. We used 0.05, according to the detection limit of 90x WGS.
+- *min.clone.size*, the minimal clone size that can be detected by the model. We used 0.05, according to the detection limit of 90x WGS.
+- *min.prior.size*, the lower limit of clone sizes scanned by the parameter estimation. Parameter setzs associated with clones < min.clone.size will be evaluated with the neutral model. We used 0.01, according to the detection limit of 90x WGS.
+- *use.sensitivity* should sequencing sensitivity information be included in addition to binomial sampling? Defaults to F; if T, a matrix *false.negative.per.vaf* with columns corresponding to the measured VAFs and rows corresponding to individual measurements of the false negative rate at this VAF in addition to binomial noise must be provided. We used use.sensitivity=F.
+
 
 ### Analysis and plots
 
