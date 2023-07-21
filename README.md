@@ -87,3 +87,9 @@ The script (Pseudo_VAFs_Mitchell_et_al.R)[Data_preprocessing/Pseudo_VAFs_Mitchel
 Download the data of id2259 from [https://data.mendeley.com/datasets/np54zjkvxr/1](https://doi.org/10.6084/m9.figshare.15029118) and structure them like: ./Fabre_et_al/*/.
 
 The script (Pseudo_VAFs_Fabre_et_al.R)[Data_preprocessing/Pseudo_VAFs_Fabre_et_al.R] generates the pseudo-bulk data and plots the VAF distribution as shown in **Fig. XX**. It also plots the trees as shown in **Fig. XX**. Finally, it stores a list object containing the VAFs in (SNVs.RData)[RData/Fabre_et_al/SNVs.RData].
+
+### Parameter inference
+
+Please refer to the section (Simulated data/Parameter_inference) for instructions on how to estimate the parameters from this data.
+
+### Analysis and plots
