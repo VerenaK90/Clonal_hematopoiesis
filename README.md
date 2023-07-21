@@ -113,7 +113,7 @@ This script
 - plots model vs data for each sample (as shown in **Fig. 3b,f,l, Fig. SXX**)
 - classifies individual cases as neutrally evolving or selected (as shown in **Fig. 3c,g,m**)
 - computes highest density estimates for the parameters (as shown in **Fig. 3d,j,n,o**)
-- compares the estimated age of the selected clones to the original studies (as whon in **Fig. 3h**).
+- compares the estimated age of the selected clones to the original studies (as shown in **Fig. 3h**).
 
 
 ## Bulk WGS data
@@ -139,4 +139,11 @@ As with the other data types, we used FLORENCE in conjunction with pyABC to esti
 
 ### Analysis and plots
 
+As with the pseudo-bulk data, extract .csv-files from the .db files using the function abc-export. The fits can then be inspected using the script (Analysis_and_plots/Plot_fits_WGS.R)[Analysis_and_plots/Plot_fits_WGS.R].
 
+This script
+- plots model vs data for each sample (as shown in **Fig. 4a, 5a,e S6a, b**)
+- classifies individual cases as neutrally evolving or selected (as shown in **Fig. 4b, 5b,f, S6b, d**)
+- computes highest density estimates for the parameters (as shown in **Fig. 4d, 5d, g, S6c,e,f, 6a,b**)
+- compares the estimated size of the selected clone to the measured VAF of known drivers (as shown in **Fig. 5c**)
+- compares the estimated parameters between samples with and without selection (as shown in **Fig. 6b**).
