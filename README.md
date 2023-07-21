@@ -99,7 +99,11 @@ As with the simulated data, we used FLORENCE in conjunction with pyABC to estima
 - *min.vaf*, the smallest VAF in the data that is to be compared to the model. Defaults to 0.05; we used 0.01 due to the high pseudo-bulk coverage.
 - *min.clone.size*, the minimal clone size that can be detected by the model. Defaults to 0.05; we used 0.01 due to the high pseudo-bulk coverage.
 - *min.prior.size*, the lower limit of clone sizes scanned by the parameter estimation. Parameter setzs associated with clones < min.clone.size will be evaluated with the neutral model.0.001 due to the high pseudo-bulk coverage.
+- *ncells*, the number of sequenced cells
+- *seq.type*, has to be set to "sc", as we analyze pseudo-bulks from single-cells
 - *use.sensitivity* should sequencing sensitivity information be included in addition to binomial sampling? Defaults to F; if T, a matrix *false.negative.per.vaf* with columns corresponding to the measured VAFs and rows corresponding to individual measurements of the false negative rate at this VAF in addition to binomial noise must be provided. We used use.sensitivity=F.
+
+In contrast to bulk WGS data sequenced at 90x, we here lowered the resolution a bit for the single-cell sequencing data. Moreover, we specify the number of sequenced cells and run the parameter estimation in single-cell mode, allowing for the simulation of single-cell sequencing and generation of pseudo-bulk data thereof. 
 
 
 ### Analysis and plots
