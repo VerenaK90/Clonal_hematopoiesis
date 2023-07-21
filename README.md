@@ -1,5 +1,5 @@
 # Clonal_hemopoiesis
-This repository contains code to reproduce analysis in Körber et al., Quantifying drift and selection from a single bulk tissue sample. It consists of the follwoing parts that are accompanied by a tutorial:
+This repository contains code to reproduce analysis in Körber et al., Quantifying drift and selection from a single bulk tissue sample. It consists of the follwoing parts:
 
 - [Package requirements](#package-requirements)
 - [Parameter estimation](#parameter-estimation)
@@ -23,6 +23,10 @@ Download and install R v4.2.0 and the following packages on your computer:
   - deSolve v1.33
   - openxlsx v4.2.5
   - cdata v1.2.0
+  - ggpubr v0.4.0
+  - phangorn v2.10.0
+  - RRphylo v2.7.0
+  - ggplot2 v3.4.2
 
 We have bundled R functions to model drift and selection in growing and homeostatic tissues in the R package FLORENCE. Please download and install from (https://github.com/VerenaK90/FLORENCE).
 
@@ -58,5 +62,16 @@ Upon parameter estimation, the posterior probabilities were analyzed using the s
 - computes statistics of the fits - %posterior probability supporting the selection model and the neutral model
 - evaluates true and false positives for different clone sizes and sequencing depths, constructs the corresponding ROC curves and computes the AUC at the selected operating point
 - this script generates the figure panels for **Fig. 1g-j** and **Fig. S1d-f**.
+
+## Published single cell WGS data
+
+We tested our model on pseudo-bulk WGS data from published single-cell WGS data of three studies, Lee-Six et al., Nature, 2018, Mitchell et al., Nature, 2022 and Fabre et al., 2022. In a first step, we generated the pseudo-bulks for each study as outlined in the following.
+
+### Mitchell et al.
+
+Download the data from https://data.mendeley.com/datasets/np54zjkvxr/1 and store them in a structure
+./Mitchell_et_al/*/.
+
+The script (Pseudo_VAFs_Mitchell_et_al.R)[Data_preprocessing/Pseudo_VAFs_Mitchell_et_al.R] generates the pseudo-bulk data and plots the VAF distributions as shown in Fig. 3f,l. It also plots the trees as shown in Fig. 3e,k. Finally, it stores a list object containing the VAFs for each sample in (SNVs.RData)[RData/Mitchell_et_al/SNVs.RData].
 
 
