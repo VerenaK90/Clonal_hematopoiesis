@@ -90,6 +90,6 @@ The script (Pseudo_VAFs_Fabre_et_al.R)[Data_preprocessing/Pseudo_VAFs_Fabre_et_a
 
 ### Parameter inference
 
-Please refer to the section [Simulated data/Parameter inference](#simulated-data/parameter-inference) for instructions on how to estimate the parameters from this data.
+Please refer to the section [Simulated data](#simulated-data) for instructions on how to estimate the parameters from this data.
 
 ### Analysis and plots
