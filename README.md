@@ -35,6 +35,10 @@ We have bundled R functions to model drift and selection in growing and homeosta
 
 Download and install python3 and pyABC von your computer.
 
+Associated data can be found on Mendeley.
+
+To reproduce the analysis, please check the file structure and make sure the required scripts and input files are in the correct location.
+
 ## Variant allele frequencies shaped by drift and selection in homeostatic tissues
 
 FLORENCE predicts that drift and selection shape the variant allele frequency distribution distinctly. We predict VAF distributions for different parameter sets and time points in the script [Theoretical_model_performance.R](Analysis_and_figures/Theoretical_model_performance.R). The script also produces the figure panels **Figure 1c, f**, and **Figure S1a, b**.
