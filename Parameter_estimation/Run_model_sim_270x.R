@@ -7,7 +7,7 @@ library(DriftAndSelection)
 
 patient.id='STS1' 
 
-sample.info <- read.xlsx("Metadata/Sample_information_simulated_data.xlsx", sheet = 1)
+sample.info <- read.xlsx("MetaData/Sample_information_simulated_data.xlsx", sheet = 1)
 rownames(sample.info) <- sample.info$SampleID
 age <- sample.info[patient.id,]$Age*365
 
