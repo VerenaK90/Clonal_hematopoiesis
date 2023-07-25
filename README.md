@@ -129,7 +129,7 @@ As with the other data types, we used FLORENCE in conjunction with pyABC to esti
 - *patient.id*, the ID/name of the analyzed subject
 - *sort*, the cell sort to be analyzed ("CD34", "MNC", "MNC_minus_T" or "PB_gran")
 - *age*, the age (in days)
-- *snvs*, a named list containing a data frame with VAFs and depths for each individual, as provided in RData/WGS_data/SNVs_indels.RData 
+- *snvs*, a named list containing a data frame with VAFs and depths for each individual, as provided in RData/WGS/SNVs.RData 
 - *depth*, the sequencing depth used to generate the data 
 - *min.vaf*, the smallest VAF in the data that is to be compared to the model. We used 0.05, according to the detection limit of 90x WGS.
 - *min.clone.size*, the minimal clone size that can be detected by the model. We used 0.05, according to the detection limit of 90x WGS.
