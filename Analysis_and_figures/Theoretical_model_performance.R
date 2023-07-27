@@ -33,6 +33,50 @@ ggplot(to.plot, aes(x=1/VAF, y=Number_of_Variants, col=Age, group=Age)) + geom_p
 dev.off()
 
 
+####################################################################################################################
+## Fig. S1a: How does the model behave with varying N, while leaving N/lambda constant?
+
+age <- 50
+mu <- 1 # per division
+to.plot <- data.frame()
+
+for(Ntau in c(10^3, 10^4, 10^5)){ # try different values for Nxtau = N/lambda
+  print(Ntau)
+  for(N in c(1000, 10000, 100000, 10^6)){
+    lambda <- N/Ntau
+    to.plot <- rbind(to.plot, 
+                     data.frame(VAF=seq(0.05, 1, 0.01), Number_of_Variants = sapply(seq(0.05, 1, 0.01), function(x){
+                       mutational.burden(mu=mu, N=N, lambda.exp = 1, delta.exp = 0.2, lambda.ss = lambda, t.end = age, b = x*N)
+                     }),  Stem_cell_count=N, Division_rate = lambda))
+    
+  }
+}
+
+
+pdf(paste0(analysis.directory, "/Figures/Figure_S1_1.pdf"), width=9, height=9, useDingbats = F)
+
+ggplot(to.plot, aes(x=1/VAF, y=Number_of_Variants, col=log10(Stem_cell_count), group=Stem_cell_count)) + geom_point() + geom_line() +
+  scale_color_gradientn(colors=rev(hcl.colors(n = 7, palette="Zissou 1")), limits=c(3, 8))+
+  scale_y_continuous(  name="Cumulative # of SSNVs") + facet_wrap(~Ntau, scales = "free_y") +
+  theme(aspect.ratio = 1, legend.position = "bottom") 
+
+# normalize to 1 to get densities
+to.plot.2 <- to.plot
+for(ntau in unique(to.plot.2$Ntau)){
+  for(N in unique(to.plot.2[to.plot.2$Ntau==ntau,]$Stem_cell_count)){
+    to.plot.2[to.plot.2$Stem_cell_count==N & to.plot.2$Ntau==ntau,]$Number_of_Variants <- to.plot.2[to.plot.2$Stem_cell_count==N & to.plot.2$Ntau==ntau,]$Number_of_Variants/max(to.plot.2[to.plot.2$Stem_cell_count==N & to.plot.2$Ntau==ntau,]$Number_of_Variants)
+  }
+}
+
+# plot densities with log-transformed y-axis to view differences
+ggplot(to.plot.2, aes(x=1/VAF, y=Number_of_Variants, col=log10(Stem_cell_count), group=Stem_cell_count)) + geom_line() +
+  scale_color_gradientn(colors=rev(hcl.colors(n = 7, palette="Zissou 1")), limits=c(3, 8))+
+  scale_y_log10(  name="Cumulative # of SSNVs") + facet_wrap(~Ntau, scales = "free_y") +
+  theme(aspect.ratio = 1, legend.position = "bottom") + annotation_logticks(outside = T, sides = "l") + coord_cartesian(clip="off")
+
+dev.off()
+
+
 ##############################################################################################################################################
 ## Figure 1f: predicted selection over time - 25,000 stem cells that divide 10 times per year. A selected clone is introduced at 20 years and grows with a selective advantage of 0.98
 
@@ -72,7 +116,7 @@ ggplot(simulated.burden.selection[simulated.burden.selection$VAF>=0.05,], aes(x=
 dev.off()
 
 ##############################################################################################################################################
-## Figure S1a: Predicted selection for varying t.s but at the same clone size
+## Figure 1g: Predicted selection for varying t.s but at the same clone size
 
 vafs.of.interest <- seq(0.01, 1, 0.005)
 
@@ -102,7 +146,7 @@ for(age in c(50, 60, 70, 80, 90)){
 }
 
 
-pdf(paste0(analysis.directory, "/Figures/Figure_S1_a.pdf"), width=3.5, height=3.5, useDingbats = F)
+pdf(paste0(analysis.directory, "/Figures/Figure_1_g.pdf"), width=3.5, height=3.5, useDingbats = F)
 
 ggplot(simulated.burden.selection[simulated.burden.selection$VAF>=0.05,], aes(x=1/VAF, y=SSNVs, col=Time/365, group=Time)) +
   geom_line() + 
