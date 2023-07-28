@@ -16,7 +16,7 @@ for(N in c(10^3, 10^4, 10^5)){
   for(age in seq(0, 100, 10)){ # simulate for varying agess
     
     to.plot <- rbind(to.plot, 
-                     data.frame(VAF=seq(0.05, 1, 0.01), Number_of_Variants = sapply(seq(0.05, 1, 0.01), function(x){
+                     data.frame(VAF=seq(0.05, 1, 0.01), Number_of_Variants = sapply(2*seq(0.05, 1, 0.01), function(x){
                        mutational.burden(mu=mu, N=N, lambda.exp = 1, delta.exp = 0.2, lambda.ss = lambda, t.end = age*365, b = x*N)
                      }), Age = age, Stem_cell_count=N))
     
@@ -36,7 +36,7 @@ dev.off()
 ####################################################################################################################
 ## Fig. S1a: How does the model behave with varying N, while leaving N/lambda constant?
 
-age <- 50
+age <- 100
 mu <- 1 # per division
 to.plot <- data.frame()
 
@@ -45,7 +45,7 @@ for(Ntau in c(10^3, 10^4, 10^5)){ # try different values for Nxtau = N/lambda
   for(N in c(1000, 10000, 100000, 10^6)){
     lambda <- N/Ntau
     to.plot <- rbind(to.plot, 
-                     data.frame(VAF=seq(0.05, 1, 0.01), Number_of_Variants = sapply(seq(0.05, 1, 0.01), function(x){
+                     data.frame(VAF=seq(0.05, 1, 0.01), Number_of_Variants = sapply(2*seq(0.05, 1, 0.01), function(x){
                        mutational.burden(mu=mu, N=N, lambda.exp = 1, delta.exp = 0.2, lambda.ss = lambda, t.end = age, b = x*N)
                      }),  Stem_cell_count=N, Division_rate = lambda))
     
@@ -100,7 +100,7 @@ simulated.burden.selection <- c()
 for(age in c(40,50, 52, 54, 56, 58, 60, 70)){
   simulated.burden.selection <- rbind(simulated.burden.selection, 
                                       data.frame(VAF= vafs.of.interest,
-                                                 SSNVs = sapply(vafs.of.interest, function(b){
+                                                 SSNVs = sapply(2*vafs.of.interest, function(b){
                                                    mutational.burden.with.selection(mu, N, lambda.exp, delta.exp, lambda.ss, t.end=age*365, t.s = t.s, s=s, b= b*N, min.clone.size = 0.01)
                                                  }), Time=age, Clone.size =  min(N, exp(lambda.ss*(1-s)*(age*365-t.s)))))
   
@@ -138,7 +138,7 @@ simulated.burden.selection <- c()
 for(age in c(50, 60, 70, 80, 90)){
   simulated.burden.selection <- rbind(simulated.burden.selection, 
                                       data.frame(VAF= vafs.of.interest,
-                                                 SSNVs = sapply(vafs.of.interest, function(b){
+                                                 SSNVs = sapply(2*vafs.of.interest, function(b){
                                                    mutational.burden.with.selection(mu, N, lambda.exp, delta.exp, lambda.ss, t.end=age*365, 
                                                                                     t.s = (age-growth.time)*365, s=s, b= b*N, min.clone.size = 0.01)
                                                  }), Time=(age-growth.time)*365, Clone.size =  min(N, exp(lambda.ss*(1-s)*(age*365-growth.time*365)))))
@@ -177,7 +177,7 @@ simulated.burden.selection <- c()
 for(s in seq(0.95, 0.99, 0.002)){
   simulated.burden.selection <- rbind(simulated.burden.selection, 
                                       data.frame(VAF= vafs.of.interest,
-                                                 SSNVs = sapply(vafs.of.interest, function(b){
+                                                 SSNVs = sapply(2*vafs.of.interest, function(b){
                                                    mutational.burden.with.selection(mu, N, lambda.exp, delta.exp, lambda.ss, t.end=age*365, t.s = t.s*365, s=s, b= b*N, min.clone.size = 0.01)
                                                  }), s=s, Clone.size =  min(N, exp(lambda.ss*(1-s)*(age*365-t.s*365)))))
   
