@@ -35,7 +35,7 @@ We have bundled R functions to model drift and selection in growing and homeosta
 
 Download and install python3 and pyABC von your computer.
 
-Associated data can be found on Mendeley.
+Associated data can be found on Mendeley (doi: 10.17632/yvxdb7t3yk.1).
 
 To reproduce the analysis, please check the file structure and make sure the required scripts and input files are in the correct location.
 
