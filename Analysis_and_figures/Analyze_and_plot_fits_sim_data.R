@@ -433,7 +433,7 @@ save(parameters, neutral.parameters, selected.parameters, plotlist.model.vs.data
 
 
 ######################### ######################### ######################### ######################### ######################### 
-### Figure 1g: Posterior probability for the selected clone
+### Figure 2a: Posterior probability for the selected clone
 
 to.plot <- melt(t(model.support.selection), value.name = "P_selection")
 colnames(to.plot)[c(1,2)] <- c("Patient", "Depth")
@@ -455,7 +455,7 @@ to.plot$Clone_size[to.plot$Clone_size==0] <- NA
 
 ## plot posterior probabilities supporting the neutral and the selection model for a subset of examples:
 
-pdf(paste0(analysis.directory, "/Figures/Figure_1_g.pdf"), width=6, height=6)
+pdf(paste0(analysis.directory, "/Figures/Figure_2_a.pdf"), width=6, height=6)
 
 to.plot.selection <- to.plot[to.plot$Depth==90 & !is.na(to.plot$`Posterior probability`) &
                                to.plot$Patient %in% c("STN8", "STS25", "STS35", "STS46", "STS53", "STS84"),]
@@ -468,7 +468,7 @@ ggplot(to.plot.selection,
 dev.off()
 
 ######################### ######################### ######################### ######################### ######################### 
-### Figure 1h/S1d-f: ROC curve for varying thresholds
+### Figure 2b/S1d-f: ROC curve for varying thresholds
 
 # 90x seq depth
 to.plot <- inference.stats[["90"]]
@@ -532,13 +532,13 @@ p5 <- ggplot(roc[roc$size>=5,], aes(x=Cutoff, y=TP - FP, group=size)) + geom_lin
   ggtitle("90x") + coord_cartesian(ylim=c(0,1))
   geom_vline(xintercept = 15, col="firebrick")
 
-pdf(paste0(analysis.directory, "/Figures/Figure_1_h.pdf"), width=4, height = 3)
+# pdf(paste0(analysis.directory, "/Figures/Figure_2_b.pdf"), width=4, height = 3)
+# 
+# print(p5)
+# 
+# dev.off()
 
-print(p5)
-
-dev.off()
-
-pdf(paste0(analysis.directory, "/Figures/Figure_1_i.pdf"), width=4, height = 3)
+pdf(paste0(analysis.directory, "/Figures/Figure_2_b.pdf"), width=4, height = 3)
 
 print(p1)
 
@@ -564,7 +564,7 @@ print(p4)
 dev.off()
 
 ######################### ######################### ######################### ######################### ######################### 
-### Figure 1j, compute AUC; add point 1/1 to every combination
+### Figure 2c, compute AUC; add point 1/1 to every combination
 
 auc <- data.frame()
 
@@ -595,7 +595,7 @@ for(size in unique(roc.270$size)){
                           size = size, depth=270))
 }
 
-pdf(paste0(analysis.directory, "/Figures/Figure_1_j.pdf"), width=4, height = 3)
+pdf(paste0(analysis.directory, "/Figures/Figure_2_c.pdf"), width=4, height = 3)
 
 ggplot(auc, aes(x=size, y=AUC, group=depth, linetype=as.character(depth))) + geom_line() + scale_x_log10(limits=c(1, 100)) +
   scale_y_continuous(limits = c(0.5,1)) + geom_vline(xintercept = 10, linetype=2)
