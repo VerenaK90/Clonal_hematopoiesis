@@ -36,43 +36,51 @@ dev.off()
 ####################################################################################################################
 ## Fig. S1a: How does the model behave with varying N, while leaving N/lambda constant?
 
-age <- 100
-mu <- 1 # per division
+age <- 100 # evaluate at fixed age
+mu <- 1
 to.plot <- data.frame()
 
-for(Ntau in c(10^3, 10^4, 10^5)){ # try different values for Nxtau = N/lambda
+for(Ntau in c(10^3, 10^4, 10^5)){
   print(Ntau)
   for(N in c(1000, 10000, 100000, 10^6)){
     lambda <- N/Ntau
+    #  mu <- mu_per_year/lambda
     to.plot <- rbind(to.plot, 
                      data.frame(VAF=seq(0.05, 1, 0.01), Number_of_Variants = sapply(2*seq(0.05, 1, 0.01), function(x){
                        mutational.burden(mu=mu, N=N, lambda.exp = 1, delta.exp = 0.2, lambda.ss = lambda, t.end = age, b = x*N)
-                     }),  Stem_cell_count=N, Division_rate = lambda))
+                     }),  Stem_cell_count=N, Division_rate = lambda, Mutation_rate=mu, Ntau=Ntau, Phases = "both"),
+                     data.frame(VAF=seq(0.05, 1, 0.01), Number_of_Variants = sapply(2*seq(0.05, 1, 0.01), function(x){
+                       mutational.burden(mu=mu, N=N, lambda.exp = 1, delta.exp = 0.2, lambda.ss = lambda, t.end = age, b = x*N, phase="early")
+                     }),  Stem_cell_count=N, Division_rate = lambda, Mutation_rate=mu, Ntau=Ntau, Phases = "expansion"),
+                     data.frame(VAF=seq(0.05, 1, 0.01), Number_of_Variants = sapply(2*seq(0.05, 1, 0.01), function(x){
+                       mutational.burden(mu=mu, N=N, lambda.exp = 1, delta.exp = 0.2, lambda.ss = lambda, t.end = age, b = x*N, phase="homeostasis")
+                     }),  Stem_cell_count=N, Division_rate = lambda, Mutation_rate=mu, Ntau=Ntau, Phases = "homeostasis"))
     
   }
 }
 
-
 pdf(paste0(analysis.directory, "/Figures/Figure_S1_1.pdf"), width=9, height=9, useDingbats = F)
 
-ggplot(to.plot, aes(x=1/VAF, y=Number_of_Variants, col=log10(Stem_cell_count), group=Stem_cell_count)) + geom_point() + geom_line() +
+ggplot(to.plot, aes(x=1/VAF, y=Number_of_Variants, col=log10(Stem_cell_count), group=Stem_cell_count)) +  geom_line() +
   scale_color_gradientn(colors=rev(hcl.colors(n = 7, palette="Zissou 1")), limits=c(3, 8))+
-  scale_y_continuous(  name="Cumulative # of SSNVs") + facet_wrap(~Ntau, scales = "free_y") +
+  scale_y_continuous(  name="Cumulative # of SSNVs") + facet_wrap(~Ntau*Phases, scales = "free_y") +
+  #scale_color_continuous(trans="log10")+
   theme(aspect.ratio = 1, legend.position = "bottom") 
 
-# normalize to 1 to get densities
+# normalize to 1
 to.plot.2 <- to.plot
-for(ntau in unique(to.plot.2$Ntau)){
-  for(N in unique(to.plot.2[to.plot.2$Ntau==ntau,]$Stem_cell_count)){
-    to.plot.2[to.plot.2$Stem_cell_count==N & to.plot.2$Ntau==ntau,]$Number_of_Variants <- to.plot.2[to.plot.2$Stem_cell_count==N & to.plot.2$Ntau==ntau,]$Number_of_Variants/max(to.plot.2[to.plot.2$Stem_cell_count==N & to.plot.2$Ntau==ntau,]$Number_of_Variants)
+for(phase in unique(to.plot.2$Phases)){
+  for(ntau in unique(to.plot.2$Ntau)){
+    for(N in unique(to.plot.2[to.plot.2$Ntau==ntau,]$Stem_cell_count)){
+      to.plot.2[to.plot.2$Stem_cell_count==N & to.plot.2$Ntau==ntau & to.plot.2$Phases==phase,]$Number_of_Variants <- to.plot.2[to.plot.2$Stem_cell_count==N & to.plot.2$Ntau==ntau & to.plot.2$Phases==phase,]$Number_of_Variants/max(to.plot[to.plot$Stem_cell_count==N & to.plot$Ntau==ntau & to.plot$Phases=="both",]$Number_of_Variants)
+    }
   }
 }
 
-# plot densities with log-transformed y-axis to view differences
 ggplot(to.plot.2, aes(x=1/VAF, y=Number_of_Variants, col=log10(Stem_cell_count), group=Stem_cell_count)) + geom_line() +
   scale_color_gradientn(colors=rev(hcl.colors(n = 7, palette="Zissou 1")), limits=c(3, 8))+
-  scale_y_log10(  name="Cumulative # of SSNVs") + facet_wrap(~Ntau, scales = "free_y") +
-  theme(aspect.ratio = 1, legend.position = "bottom") + annotation_logticks(outside = T, sides = "l") + coord_cartesian(clip="off")
+  scale_y_continuous(  name="Cumulative # of SSNVs") + facet_wrap(~Ntau*Phases, scales = "free") +
+  theme(aspect.ratio = 1, legend.position = "bottom") 
 
 dev.off()
 
