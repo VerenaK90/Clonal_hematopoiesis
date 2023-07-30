@@ -11,6 +11,8 @@ This repository contains code to reproduce analysis in Körber et al., Quantifyi
 - [Real data](#real-data)
   This section explains how the model was applied to the actual data.
 
+To reproduce (parts of) the analysis, please download the supplementary tables, the associated data from Mendeley (doi: 10.17632/yvxdb7t3yk.1) and adjust the directories in Settings.R. Refer to (#package-requirements) for a list of R libraries used.
+
 ## Package requirements
 
 Download and install R v4.2.0 and the following packages on your computer:
@@ -30,6 +32,11 @@ Download and install R v4.2.0 and the following packages on your computer:
   - cgwtools v3.3
   - ggVennDiagram v1.2.2
   - ggbeeswarm v0.6.0
+  - ggsci v2.9
+  - Hmisc v4.7.1
+  - lemon v0.4.5
+  - data.table v1.14.2
+  - RColorBrewer v1.1.3
 
 We have bundled R functions to model drift and selection in growing and homeostatic tissues in the R package FLORENCE. Please download and install from (https://github.com/VerenaK90/FLORENCE).
 
@@ -41,7 +48,7 @@ To reproduce the analysis, please check the file structure and make sure the req
 
 ## Variant allele frequencies shaped by drift and selection in homeostatic tissues
 
-FLORENCE predicts that drift and selection shape the variant allele frequency distribution distinctly. We predict VAF distributions for different parameter sets and time points in the script [Theoretical_model_performance.R](Analysis_and_figures/Theoretical_model_performance.R). The script also produces the figure panels **Figure 1c, f**, and **Figure S1a, b**.
+FLORENCE predicts that drift and selection shape the variant allele frequency distribution distinctly. We predict VAF distributions for different parameter sets and time points in the script [Theoretical_model_performance.R](Analysis_and_figures/Theoretical_model_performance.R). The script also produces the figure panels in **Figure 1**, and **Extended Data Fig. 1a, b**.
 
 ## Simulated data
 
@@ -68,7 +75,7 @@ Upon parameter estimation, the posterior probabilities were analyzed using the s
 - plots for each instance the model fit and the highest density estimates of each parameter
 - computes statistics of the fits - %posterior probability supporting the selection model and the neutral model
 - evaluates true and false positives for different clone sizes and sequencing depths, constructs the corresponding ROC curves and computes the AUC at the selected operating point
-- this script generates the figure panels for **Fig. 1g-j** and **Fig. S1d-f**.
+- this script generates the figure panels for **Fig. 2** and **Exteded Data Fig. 1d-f**.
 
 ## Published single cell WGS data
 
