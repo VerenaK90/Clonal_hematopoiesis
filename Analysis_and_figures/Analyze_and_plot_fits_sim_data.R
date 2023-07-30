@@ -3,8 +3,8 @@ source("./Settings.R")
 library(cdata)
 
 # define where output is to be stored
-study.directory <- paste0("Model_fits/Simulated_data/ROC_study/")
-sample.info <- read.xlsx("Metadata/Sample_information_simulated_data.xlsx", sheet = 1)
+study.directory <- paste0("Model_fits/Simulated_data/")
+sample.info <- read.xlsx("MetaData/Sample_information_simulated_data.xlsx", sheet = 1)
 rownames(sample.info) <- sample.info$SampleID
 
 ######################### ######################### ######################### ######################### ######################### 
@@ -31,11 +31,11 @@ inference.stats <- list(`30`=inference.stats, `90`=inference.stats, `270`=infere
 use.sensitivity <- F
 plotlist.model.vs.data <- list()
 
-load(paste0(study.directory, "SNVs_90x.RData"))
+load(paste0(rdata.directory, "Simulated_data/SNVs_90x.RData"))
 snvs.90 <- snvs
-load(paste0(study.directory, "SNVs_30x.RData"))
+load(paste0(rdata.directory, "Simulated_data/SNVs_30x.RData"))
 snvs.30 <- snvs
-load(paste0(study.directory, "SNVs_270x.RData"))
+load(paste0(rdata.directory, "Simulated_data/SNVs_270x.RData"))
 snvs.270 <- snvs
 
 seq.type <- "bulk"
@@ -69,7 +69,7 @@ for(patient.id in sample.info$SampleID){
     ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### 
     ###### load observed data
     
-    directory <- paste0(study.directory, patient.id, "/Model_fit/", depth, "/")
+    directory <- paste0(study.directory, patient.id, "/", depth, "/")
     if(!file.exists(paste0(directory, "/Model_fit.csv"))){
       warning("No file for patient", patient.id)
       next
