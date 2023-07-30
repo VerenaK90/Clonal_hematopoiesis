@@ -79,7 +79,7 @@ model.colors <- c(neutral = '#7891F9', selection = '#F79292')
 
 
 ############################################################################################################################################
-## custom function to adjust hdi interval size for plotting density distributions; curtosy to https://stackoverflow.com/questions/59471972/shade-an-area-under-density-curve-to-mark-the-highest-density-interval-hdi
+## custom function to adjust hdi interval size for plotting density distributions; courtesy to https://stackoverflow.com/questions/59471972/shade-an-area-under-density-curve-to-mark-the-highest-density-interval-hdi
 
 hdi_custWidth <- function(...) {
   dots <- list(...)
