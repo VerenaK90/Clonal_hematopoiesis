@@ -26,7 +26,7 @@ abc = ABCSMC(model, prior, distance, population_size = 1000, sampler=sample_spec
 import os
 from tempfile import gettempdir
 
-db = "sqlite:///" + "/home/koerber/pyABC/Blood/" + tumor_id + "/Model_fit.db"
+db = "sqlite:///" + "/Model_fits/WGS/" + tumor_id + "/Model_fit.db"
 
 abc.new(db, r.observation("mySumStatData"))
 
