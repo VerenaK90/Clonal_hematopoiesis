@@ -8,7 +8,7 @@ library(FLORENCE)
 patient.id <- 'N1' # specify patient ID here
 sort <- "CD34" # specify cell sort here, should be either CD34, MNC, MNC_minus_T, PB_gran
 
-sample.info <- read.xlsx("Metadata/Supplementary Tables.xlsx", sheet = 2, startRow = 6)
+sample.info <- read.xlsx("MetaData/Supplementary Tables.xlsx", sheet = 2, startRow = 6)
 rownames(sample.info) <- sample.info$Paper_ID
 
 load("./RData/WGS/SNVs.RData")
