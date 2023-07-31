@@ -58,7 +58,7 @@ To test inference of drift and selection dynamics, we generated simulated divisi
 
 ### Parameter inference
 
-To estimate the model parameters, we used FLORENCE in conjunction with pyABC. To re-run the analysis refer to the folder (Parameter_estimation) and modify Simulated_data/Run_model_sim*x.R according to the sample specification. Specifically, you should provide the following information:
+To estimate the model parameters, we used FLORENCE in conjunction with pyABC. To re-run the analysis refer to the folder (Parameter_estimation) and modify Parameter_estimation/Run_model_sim*x.R according to the sample specification. Specifically, you should provide the following information:
 
 - *patient.id*, the ID/name of the analyzed subject
 - *age*, the age (in days)
@@ -68,6 +68,8 @@ To estimate the model parameters, we used FLORENCE in conjunction with pyABC. To
 - *min.clone.size*, the minimal clone size that can be detected by the model. Defaults to 0.05; we used 0.05 for all instances except for single cell WGS and simulated data with 270x, where we used 0.01.
 - *min.prior.size*, the lower limit of clone sizes scanned by the parameter estimation. Parameter setzs associated with clones < min.clone.size will be evaluated with the neutral model. Defaults to 0.01; we used 0.01 for all instances except for single cell WGS and simulated data with 270x, where we used 0.001.
 - *use.sensitivity* should sequencing sensitivity information be included in addition to binomial sampling? Defaults to F; if T, a matrix *false.negative.per.vaf* with columns corresponding to the measured VAFs and rows corresponding to individual measurements of the false negative rate at this VAF in addition to binomial noise must be provided. We used use.sensitivity=F.
+
+The script Run_model_sim*x.R is to be sourced by [ABC_fit.py](Parameter_estimation/ABC_fit.py]. Hence, please also modify the paths in this file. The python script also contains the definition of the prior distributions. Note that we chose priors running between 0 and 0.99 for s and between 0 and 1 for t_s, but these values are relative values only that will be converted into absolute values by the model script [Bayesian_fit.R](Parameter_estimation/Bayesian_fit.R). Specifically, the minimal and maximal values of s and t_s are chosen such that the clone has a minimal size of *min.prior.size* and a maximal size of 1. Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to (Analyze_and_plot_fits_sim_data.R)[Analysis_and_figures/Analyze_and_plot_fits_sim_data.R]).
   
 ### Analysis and plots
 
@@ -116,6 +118,8 @@ As with the simulated data, we used FLORENCE in conjunction with pyABC to estima
 
 In contrast to bulk WGS data sequenced at 90x, we here lowered the resolution a bit for the single-cell sequencing data. Moreover, we specify the number of sequenced cells and run the parameter estimation in single-cell mode, allowing for the simulation of single-cell sequencing and generation of pseudo-bulk data thereof. 
 
+The script Run_model_scWGS.R is to be sourced by [ABC_fit.py](Parameter_estimation/ABC_fit.py]. Hence, please also modify the paths in this file. The python script also contains the definition of the prior distributions. Note that we chose priors running between 0 and 0.99 for s and between 0 and 1 for t_s, but these values are relative values only that will be converted into absolute values by the model script [Bayesian_fit.R](Parameter_estimation/Bayesian_fit.R). Specifically, the minimal and maximal values of s and t_s are chosen such that the clone has a minimal size of *min.prior.size* and a maximal size of 1. Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to (Analyze_and_plot_fits_sim_data.R)[Analysis_and_figures/Plot_fits_published_data.R]).
+
 ### Analysis and plots
 
 Once the parameter estimation has been finished, extract .csv-files from the .db files using the function abc-export. The fits can then be inspected using the script (Analysis_and_plots/Plot_fits_published_data.R)[Analysis_and_plots/Plot_fits_published_data.R].
@@ -147,6 +151,7 @@ As with the other data types, we used FLORENCE in conjunction with pyABC to esti
 - *min.prior.size*, the lower limit of clone sizes scanned by the parameter estimation. Parameter setzs associated with clones < min.clone.size will be evaluated with the neutral model. We used 0.01, according to the detection limit of 90x WGS.
 - *use.sensitivity* should sequencing sensitivity information be included in addition to binomial sampling? Defaults to F; if T, a matrix *false.negative.per.vaf* with columns corresponding to the measured VAFs and rows corresponding to individual measurements of the false negative rate at this VAF in addition to binomial noise must be provided. We used use.sensitivity=F.
 
+The script Run_model_WGS.R is to be sourced by [ABC_fit.py](Parameter_estimation/ABC_fit.py]. Hence, please also modify the paths in this file. The python script also contains the definition of the prior distributions. Note that we chose priors running between 0 and 0.99 for s and between 0 and 1 for t_s, but these values are relative values only that will be converted into absolute values by the model script [Bayesian_fit.R](Parameter_estimation/Bayesian_fit.R). Specifically, the minimal and maximal values of s and t_s are chosen such that the clone has a minimal size of *min.prior.size* and a maximal size of 1. Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to (Analyze_and_plot_fits_sim_data.R)[Analysis_and_figures/Plot_fits_WGS.R]).
 
 ### Analysis and plots
 
