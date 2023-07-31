@@ -75,7 +75,7 @@ The script Run_model_sim*x.R is to be sourced by [ABC_fit.py](Parameter_estimati
   
 ### Analysis and plots
 
-Upon parameter estimation, the posterior probabilities were analyzed using the script (Analyze_and_plot_fits_sim_data.R)[Analysis_and_figures/Analyze_and_plot_fits_sim_data.R]. This script 
+Upon parameter estimation, the posterior probabilities (which can be downloaded from Mendeley) were analyzed using the script (Analyze_and_plot_fits_sim_data.R)[Analysis_and_figures/Analyze_and_plot_fits_sim_data.R]. This script 
 - plots for each instance the model fit and the highest density estimates of each parameter
 - computes statistics of the fits - %posterior probability supporting the selection model and the neutral model
 - evaluates true and false positives for different clone sizes and sequencing depths, constructs the corresponding ROC curves and computes the AUC at the selected operating point
@@ -124,7 +124,7 @@ The script Run_model_scWGS.R is to be sourced by [ABC_fit.py](Parameter_estimati
 
 ### Analysis and plots
 
-Once the parameter estimation has been finished, extract .csv-files from the .db files using the function abc-export. The fits can then be inspected using the script (Analysis_and_plots/Plot_fits_published_data.R)[Analysis_and_plots/Plot_fits_published_data.R].
+Once the parameter estimation has been finished, extract .csv-files from the .db files using the function abc-export (or directly download them from Mendeley). The fits can then be inspected using the script (Analysis_and_plots/Plot_fits_published_data.R)[Analysis_and_plots/Plot_fits_published_data.R].
 
 This script
 - plots model vs data for each sample (as shown in **Fig. 3b,f,l, Fig. SXX**)
@@ -157,7 +157,7 @@ The script Run_model_WGS.R is to be sourced by [ABC_fit.py](Parameter_estimation
 
 ### Analysis and plots
 
-As with the pseudo-bulk data, extract .csv-files from the .db files using the function abc-export. The fits can then be inspected using the script (Analysis_and_plots/Plot_fits_WGS.R)[Analysis_and_plots/Plot_fits_WGS.R].
+As with the pseudo-bulk data, extract .csv-files from the .db files using the function abc-export (or directly download them from Mendeley). The fits can then be inspected using the script (Analysis_and_plots/Plot_fits_WGS.R)[Analysis_and_plots/Plot_fits_WGS.R].
 
 This script
 - plots data only for the neutral cases (**Fig. 4c**)
