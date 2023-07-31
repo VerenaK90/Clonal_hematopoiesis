@@ -1,7 +1,8 @@
 # Clonal_hemopoiesis
 This repository contains code to reproduce analysis in Körber et al., Quantifying drift and selection from a single bulk tissue sample. It consists of the follwoing parts:
 
-- [Package requirements](#package-requirements)
+- [Before you start](#before-you-start)
+  This section gives an overview of the software and data used for the analysis.
 - [Parameter estimation](#parameter-estimation)
   This section explains how to do the parameter estimation from bulk WGS data. 
 - [Simulated data](#simulated-data)
@@ -13,7 +14,7 @@ This repository contains code to reproduce analysis in Körber et al., Quantifyi
 
 To reproduce (parts of) the analysis, please download the supplementary tables, the associated data from Mendeley (doi: 10.17632/yvxdb7t3yk.1) and adjust the directories in Settings.R. Refer to (#package-requirements) for a list of R libraries used.
 
-## Package requirements
+## Before you start
 
 Download and install R v4.2.0 and the following packages on your computer:
 - CRAN
