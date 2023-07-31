@@ -1,8 +1,7 @@
 #################################################################################################################################################
 ############ Simulate selected trees 
 
-source("./Simulated_data/Simulate_trees.R")
-source("./Simulated_data/Post_processing.R")
+library(FLORENCE)
 
 library(doParallel)
 library(foreach)
