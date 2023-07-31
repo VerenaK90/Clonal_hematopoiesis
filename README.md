@@ -12,7 +12,7 @@ This repository contains code to reproduce analysis in Körber et al., Quantifyi
 - [Real data](#real-data)
   This section explains how the model was applied to the actual data.
 
-To reproduce (parts of) the analysis, please download the supplementary tables, the associated data from Mendeley (doi: 10.17632/yvxdb7t3yk.1) and adjust the directories in Settings.R. Refer to (#package-requirements) for a list of R libraries used.
+To reproduce (parts of) the analysis, please download the supplementary tables, the associated data from Mendeley (doi: 10.17632/yvxdb7t3yk.1) and adjust the directories in Settings.R. Refer to (#before-you-start) for a list of R libraries used.
 
 ## Before you start
 
