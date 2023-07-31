@@ -37,6 +37,7 @@ Download and install R v4.2.0 and the following packages on your computer:
   - lemon v0.4.5
   - data.table v1.14.2
   - RColorBrewer v1.1.3
+  - ggridges v0.5.4
 
 We have bundled R functions to model drift and selection in growing and homeostatic tissues in the R package FLORENCE. Please download and install from (https://github.com/VerenaK90/FLORENCE).
 
@@ -158,8 +159,10 @@ The script Run_model_WGS.R is to be sourced by [ABC_fit.py](Parameter_estimation
 As with the pseudo-bulk data, extract .csv-files from the .db files using the function abc-export. The fits can then be inspected using the script (Analysis_and_plots/Plot_fits_WGS.R)[Analysis_and_plots/Plot_fits_WGS.R].
 
 This script
-- plots model vs data for each sample (as shown in **Fig. 4a, 5a,e S6a, b**)
-- classifies individual cases as neutrally evolving or selected (as shown in **Fig. 4b, 5b,f, S6b, d**)
-- computes highest density estimates for the parameters (as shown in **Fig. 4d, 5d, g, S6c,e,f, 6a,b**)
-- compares the estimated size of the selected clone to the measured VAF of known drivers (as shown in **Fig. 5c**)
-- compares the estimated parameters between samples with and without selection (as shown in **Fig. 6b**).
+- plots data only for the neutral cases (**Fig. 4c**)
+- plots model vs data for each sample (as shown in **Fig. 4a, 5a, 6a, S4, S6a, b**)
+- classifies individual cases as neutrally evolving or selected (as shown in **Fig. 4b, 5b, 6b, S6b, S7**)
+- compares estimated clone sizes to VAFs of known drivers (**Fig. 5c**)
+- computes highest density estimates for the parameters (as shown in **Fig. 4d, e, 5d-j, 6c-e, S6c, S7**)
+- compares the estimated parameters between samples with and without selection (as shown in **Fig. 6d, e**)
+- computes the cumulative age-incidence of CH driver acquisition (**Fig. 7**)
