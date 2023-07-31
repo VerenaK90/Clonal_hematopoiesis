@@ -99,7 +99,7 @@ Download the data from https://data.mendeley.com/datasets/np54zjkvxr/1 and struc
 The script (Pseudo_VAFs_Mitchell_et_al.R)[Data_preprocessing/Pseudo_VAFs_Mitchell_et_al.R] generates the pseudo-bulk data and plots the VAF distributions as shown in **Fig. 3f,l, Fig. S2d,e**. It also plots the trees as shown in **Fig. 3e,k**. Finally, it stores a list object containing the VAFs for each sample in (SNVs.RData)[RData/Mitchell_et_al/SNVs.RData]. Alternatively, this object can be directly downloaded from Mendeley.
 
 #### Fabre et al.
-Download the data of id2259 from [https://data.mendeley.com/datasets/np54zjkvxr/1](https://doi.org/10.6084/m9.figshare.15029118) and structure them like: ./Fabre_et_al/*/.
+Download the data of id2259 from doi.org/10.6084/m9.figshare.15029118 and structure them like: ./Fabre_et_al/*/.
 
 The script (Pseudo_VAFs_Fabre_et_al.R)[Data_preprocessing/Pseudo_VAFs_Fabre_et_al.R] generates the pseudo-bulk data and plots the VAF distribution as shown in **Fig. XX**. It also plots the trees as shown in **Fig. XX**. Finally, it stores a list object containing the VAFs in (SNVs.RData)[RData/Fabre_et_al/SNVs.RData]. Alternatively, this object can be directly downloaded from Mendeley.
 
