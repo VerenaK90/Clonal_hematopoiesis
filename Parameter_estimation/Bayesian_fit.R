@@ -59,7 +59,6 @@ cumulated.vaf.count.sd <- lapply(vafs, function(y){sapply(vafs.of.interest, func
 })
 
 
-vafs = vafs.of.interest
 mutation.count = cumulated.vaf.count.mean
 sampled.sd <- lapply(cumulated.vaf.count.sd, function(x){
   x[x==0] <- min(x[x!=0]) # if there's no error, set to minimal error to avoid problems in cost function
@@ -73,6 +72,7 @@ mySumStatData <- list(mutation.count=mutation.count, sampled.sd=sampled.sd, age 
 
 myModel <- function(parms){
 
+  ## transform parameters into absolute values
   N <- round(10^parms$N) # prior is on log scale
   delta.exp <- parms$delta_exp
   lambda.ss <- 10^parms$lambda_ss # prior is on log scale
@@ -93,7 +93,7 @@ myModel <- function(parms){
   s <- min.s + parms$s*(max.s-min.s)
 
   if(s < 0 & age >0){ # s must be at least 0
-    modelResult <- rep(10^5, length(vafs))
+    modelResult <- rep(10^5, length(vafs.of.interest))
     return( list(modelResult=modelResult))
   }else if(s<0 & age==0){
    ## if age = 0: no time for selection yet
@@ -104,27 +104,27 @@ myModel <- function(parms){
    
   modelResult <- list()
   
-  # define the clone sizes of interest: start from min.vaf/2 (where min.vaf is the smallest observable vaf) to account for stochastic fluxes from this interval into the measurable region
-  clone.sizes.for.fitting <- c(min.vaf/2, seq(min.vaf, 1, 0.01))   
+  # define the clone frequencies of interest: start from min.vaf/2 (where min.vaf is the smallest observable vaf) to account for stochastic fluxes from this interval into the measurable region
+  clone.frequencies.for.fitting <- c(min.vaf/2, seq(min.vaf, 1, 0.01))   
 
-  # don't take clones that would round to zero cells
-  clone.sizes.for.fitting <- clone.sizes.for.fitting[round(clone.sizes.for.fitting*N)>0]
+  # don't take clones frequencies that would round to zero cells
+  clone.frequencies.for.fitting <- clone.frequencies.for.fitting[round(clone.frequencies.for.fitting*N)>0]
 
   # simulate the mutation counts
   sim <-  mutational.burden.with.selection(mu=mu, N=N, lambda.exp=1, delta.exp=delta.exp, min.clone.size = min.clone.size,
-                                       lambda.ss=lambda.ss, t.end=age, t.s=t.s[1], s=s, round(clone.sizes.for.fitting*N))
+                                       lambda.ss=lambda.ss, t.end=age, t.s=t.s[1], s=s, round(clone.frequencies.for.fitting*N))
   
   # convert the cumulative counts into counts per interval
   sim <- sim - c(sim[-1], 0)
     
   ## add offset to clonal bin 
-  sim[clone.sizes.for.fitting==1] <- sim[clone.sizes.for.fitting==1] + offset
+  sim[clone.frequencies.for.fitting==1] <- sim[clone.frequencies.for.fitting==1] + offset
   
   # simulate sequencing  
-  sim.vafs <- simulated.data(seq.type, clone.sizes.for.fitting, sim, depth=depth, ncells=ncells, sensitivity= use.sensitivity, false.negative.per.vaf = false.negative.per.vaf)
+  sim.vafs <- simulated.data(seq.type, clone.frequencies.for.fitting, sim, depth=depth, ncells=ncells, sensitivity= use.sensitivity, false.negative.per.vaf = false.negative.per.vaf)
   
   # compute cumulative counts  
-  sim.vafs <- sapply(vafs, function(x){
+  sim.vafs <- sapply(vafs.of.interest, function(x){
     sum(sim.vafs >=x)
   })
   
