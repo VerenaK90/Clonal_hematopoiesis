@@ -40,7 +40,7 @@ Download and install R v4.2.0 and the following packages on your computer:
   - RColorBrewer v1.1.3
   - ggridges v0.5.4
 
-We have bundled R functions to model drift and selection in growing and homeostatic tissues in the R package FLORENCE. Please download and install from (https://github.com/VerenaK90/FLORENCE).
+We have bundled R functions to model drift and selection in growing and homeostatic tissues in the R package FLORENCE. Please download and install from (https://github.com/VerenaK90/FLORENCE) and refer to the accompanying vignette for further information on FLORENCE.
 
 Download and install python3 and pyABC von your computer.
 
