@@ -86,7 +86,7 @@ dev.off()
 
 
 ##############################################################################################################################################
-## Figure 1f: predicted selection over time - 25,000 stem cells that divide 10 times per year. A selected clone is introduced at 20 years and grows with a selective advantage of 0.98
+## Figure 1g: predicted selection over time - 25,000 stem cells that divide 10 times per year. A selected clone is introduced at 20 years and grows with a selective advantage of 0.98
 
 vafs.of.interest <- seq(0.01, 1, 0.005)
 
@@ -114,7 +114,7 @@ for(age in c(40,50, 52, 54, 56, 58, 60, 70)){
   
 }
 
-pdf(paste0(analysis.directory, "/Figures/Figure_1_f.pdf"), width=3.5, height=3.5, useDingbats = F)
+pdf(paste0(analysis.directory, "/Figures/Figure_1_g.pdf"), width=3.5, height=3.5, useDingbats = F)
 
 ggplot(simulated.burden.selection[simulated.burden.selection$VAF>=0.05,], aes(x=1/VAF, y=SSNVs, col=Time, group=Time)) +
   geom_line() + 
@@ -124,7 +124,7 @@ ggplot(simulated.burden.selection[simulated.burden.selection$VAF>=0.05,], aes(x=
 dev.off()
 
 ##############################################################################################################################################
-## Figure 1g: Predicted selection for varying t.s but at the same clone size
+## Figure 1f: Predicted selection for varying t.s but at the same clone size
 
 vafs.of.interest <- seq(0.01, 1, 0.005)
 
@@ -154,7 +154,7 @@ for(age in c(50, 60, 70, 80, 90)){
 }
 
 
-pdf(paste0(analysis.directory, "/Figures/Figure_1_g.pdf"), width=3.5, height=3.5, useDingbats = F)
+pdf(paste0(analysis.directory, "/Figures/Figure_1_f.pdf"), width=3.5, height=3.5, useDingbats = F)
 
 ggplot(simulated.burden.selection[simulated.burden.selection$VAF>=0.05,], aes(x=1/VAF, y=SSNVs, col=Time/365, group=Time)) +
   geom_line() + 
@@ -165,7 +165,7 @@ dev.off()
 
 
 ##############################################################################################################################################
-## Sigure S1b: Predicted selection for varying s but at the same age of 70 years
+## Sigure 1h: Predicted selection for varying s but at the same age of 70 years
 
 vafs.of.interest <- seq(0.01, 1, 0.005)
 
@@ -193,7 +193,7 @@ for(s in seq(0.95, 0.99, 0.002)){
 simulated.burden.selection$growth_per_year <- (exp(lambda.ss*(1-simulated.burden.selection$s)*365)-1)*100
 
 
-pdf(paste0(analysis.directory, "/Figures/Figure_S1_b.pdf"), width=3.5, height=3.5, useDingbats = F)
+pdf(paste0(analysis.directory, "/Figures/Figure_1_h.pdf"), width=3.5, height=3.5, useDingbats = F)
 
 ggplot(simulated.burden.selection[simulated.burden.selection$VAF>=0.05,], aes(x=1/VAF, y=SSNVs, col=growth_per_year, group=1-s)) +
   geom_line() + scale_x_continuous(breaks=c(5, 10, 20), labels = c("0.2", "0.1", "0.05"), 
