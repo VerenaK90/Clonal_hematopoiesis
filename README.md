@@ -90,13 +90,13 @@ We tested our model on pseudo-bulk WGS data from published single-cell WGS data 
 #### Lee-Six et al.
 Download the data from https://doi.org/10.17632/yzjw2stk7f.1 and store them in ./Lee-Six_et_al/Caveman/. In addition, download the re-called data from our repository (**fill-in**) and store them in ./Lee-Six_et_al/Mutect_Strelka.
 
-The script [Pseudo_VAFs_LeeSix_et_al.R](Data_preprocessing/Pseudo_VAFs_LeeSix_et_al.R) first compares the results of Caveman and Mutect/Strelka (**Fig. S2b,c**). It progresses to generate the pseudo-bulk data and to plot the VAF distributions as shown in **Fig. 3b, S2X**. It also plots the trees as shown in **Fig. 3a**. Finally, it stores two list objects containing the VAFs in [Caveman/SNVs.RData](RData/Lee-Six_et_al/Caveman/SNVs.RData) and [Mutect_Strelka/SNVs.RData](RData/Lee-Six_et_al/Mutect_Strelka/SNVs.RData). Alternatively, these objects can be directly downloaded from Mendeley.
+The script [Pseudo_VAFs_LeeSix_et_al.R](Data_preprocessing/Pseudo_VAFs_LeeSix_et_al.R) first compares the results of Caveman and Mutect/Strelka (**Extended Data Fig. 2b,c**). It progresses to generate the pseudo-bulk data and to plot the VAF distributions as shown in **Fig. 3b, Extended Data Fig. 2d**. It also plots the trees as shown in **Fig. 3a**. Finally, it stores two list objects containing the VAFs in [Caveman/SNVs.RData](RData/Lee-Six_et_al/Caveman/SNVs.RData) and [Mutect_Strelka/SNVs.RData](RData/Lee-Six_et_al/Mutect_Strelka/SNVs.RData). Alternatively, these objects can be directly downloaded from Mendeley.
 
 #### Mitchell et al.
 
 Download the data from https://data.mendeley.com/datasets/np54zjkvxr/1 and structure them like: ./Mitchell_et_al/*/.
 
-The script (Pseudo_VAFs_Mitchell_et_al.R)[Data_preprocessing/Pseudo_VAFs_Mitchell_et_al.R] generates the pseudo-bulk data and plots the VAF distributions as shown in **Fig. 3f,l, Fig. S2d,e**. It also plots the trees as shown in **Fig. 3e,k**. Finally, it stores a list object containing the VAFs for each sample in (SNVs.RData)[RData/Mitchell_et_al/SNVs.RData]. Alternatively, this object can be directly downloaded from Mendeley.
+The script (Pseudo_VAFs_Mitchell_et_al.R)[Data_preprocessing/Pseudo_VAFs_Mitchell_et_al.R] generates the pseudo-bulk data and plots the VAF distributions as shown in **Fig. 3f,l, Extended Data Fig. 2e, f**. It also plots the trees as shown in **Fig. 3e,k**. Finally, it stores a list object containing the VAFs for each sample in (SNVs.RData)[RData/Mitchell_et_al/SNVs.RData]. Alternatively, this object can be directly downloaded from Mendeley.
 
 #### Fabre et al.
 Download the data of id2259 from doi.org/10.6084/m9.figshare.15029118 and structure them like: ./Fabre_et_al/*/.
@@ -127,9 +127,9 @@ The script Run_model_scWGS.R is to be sourced by [ABC_fit.py](Parameter_estimati
 Once the parameter estimation has been finished, extract .csv-files from the .db files using the function abc-export (or directly download them from Mendeley). The fits can then be inspected using the script [Plot_fits_published_data.R](Analysis_and_plots/Plot_fits_published_data.R).
 
 This script
-- plots model vs data for each sample (as shown in **Fig. 3b,f,l, Extended Data Fig. 2d,f,g**)
+- plots model vs data for each sample (as shown in **Fig. 3b,f,l, Extended Data Figs. 2d,f,g**)
 - classifies individual cases as neutrally evolving or selected (as shown in **Fig. 3c,g,m**)
-- computes highest density estimates for the parameters (as shown in **Fig. 3d,j,n,o**)
+- computes highest density estimates for the parameters (as shown in **Figs. 3d,j,n,o**)
 - compares the estimated age of the selected clones to the original studies (as shown in **Fig. 3h**).
 
 
@@ -161,7 +161,7 @@ As with the pseudo-bulk data, extract .csv-files from the .db files using the fu
 
 This script
 - plots data only for the neutral cases (**Fig. 4c**)
-- plots model vs data for each sample (as shown in **Figs. 4a, 5a, 6a, S4, S6a, b**)
+- plots model vs data for each sample (as shown in **Figs. 4a, 5a, 6a, Extended Data Fig. 4, Supplementry Fig. 3a**)
 - classifies individual cases as neutrally evolving or selected (as shown in **Figs. 4b, 5b, 6b, Supplementary Fig. 2, Supplementary Fig. 3a**)
 - compares estimated clone sizes to VAFs of known drivers (**Fig. 5c**)
 - computes highest density estimates for the parameters (as shown in **Fig. 4d, e, 5d-j, 6c-e, Supplementary Fig. 3b**)
