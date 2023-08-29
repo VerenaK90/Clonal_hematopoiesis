@@ -50,7 +50,7 @@ To reproduce the analysis, please check the file structure and make sure the req
 
 ## Variant allele frequencies shaped by drift and selection in homeostatic tissues
 
-FLORENCE predicts that drift and selection shape the variant allele frequency distribution distinctly. We predict VAF distributions for different parameter sets and time points in the script [Theoretical_model_performance.R](Analysis_and_figures/Theoretical_model_performance.R). The script also produces the figure panels in **Figure 1**, and **Extended Data Fig. 1a, b**.
+FLORENCE predicts that drift and selection shape the variant allele frequency distribution distinctly. We predict VAF distributions for different parameter sets and time points in the script [Theoretical_model_performance.R](Analysis_and_figures/Theoretical_model_performance.R). The script also produces the figure panels in **Figure 1**, **Extended Data Fig. 1a** and **Supplementary Fig. 1**.
 
 ## Simulated data
 
@@ -79,7 +79,7 @@ Upon parameter estimation, the posterior probabilities (which can be downloaded 
 - plots for each instance the model fit and the highest density estimates of each parameter
 - computes statistics of the fits - %posterior probability supporting the selection model and the neutral model
 - evaluates true and false positives for different clone sizes and sequencing depths, constructs the corresponding ROC curves and computes the AUC at the selected operating point
-- this script generates the figure panels for **Fig. 2** and **Exteded Data Fig. 1d-f**.
+- this script generates the figure panels for **Fig. 2** and **Exteded Data Fig. 1c**.
 
 ## Published single cell WGS data
 
@@ -127,7 +127,7 @@ The script Run_model_scWGS.R is to be sourced by [ABC_fit.py](Parameter_estimati
 Once the parameter estimation has been finished, extract .csv-files from the .db files using the function abc-export (or directly download them from Mendeley). The fits can then be inspected using the script (Analysis_and_plots/Plot_fits_published_data.R)[Analysis_and_plots/Plot_fits_published_data.R].
 
 This script
-- plots model vs data for each sample (as shown in **Fig. 3b,f,l, Fig. SXX**)
+- plots model vs data for each sample (as shown in **Fig. 3b,f,l, Extended Data Fig. 2d,f,g**)
 - classifies individual cases as neutrally evolving or selected (as shown in **Fig. 3c,g,m**)
 - computes highest density estimates for the parameters (as shown in **Fig. 3d,j,n,o**)
 - compares the estimated age of the selected clones to the original studies (as shown in **Fig. 3h**).
@@ -161,9 +161,9 @@ As with the pseudo-bulk data, extract .csv-files from the .db files using the fu
 
 This script
 - plots data only for the neutral cases (**Fig. 4c**)
-- plots model vs data for each sample (as shown in **Fig. 4a, 5a, 6a, S4, S6a, b**)
-- classifies individual cases as neutrally evolving or selected (as shown in **Fig. 4b, 5b, 6b, S6b, S7**)
+- plots model vs data for each sample (as shown in **Figs. 4a, 5a, 6a, S4, S6a, b**)
+- classifies individual cases as neutrally evolving or selected (as shown in **Figs. 4b, 5b, 6b, Supplementary Fig. 2, Supplementary Fig. 3a**)
 - compares estimated clone sizes to VAFs of known drivers (**Fig. 5c**)
-- computes highest density estimates for the parameters (as shown in **Fig. 4d, e, 5d-j, 6c-e, S6c, S7**)
+- computes highest density estimates for the parameters (as shown in **Fig. 4d, e, 5d-j, 6c-e, Supplementary Fig. 3b**)
 - compares the estimated parameters between samples with and without selection (as shown in **Fig. 6d, e**)
 - computes the cumulative age-incidence of CH driver acquisition (**Fig. 7**)
