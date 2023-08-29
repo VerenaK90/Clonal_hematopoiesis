@@ -40,7 +40,7 @@ Download and install R v4.2.0 and the following packages on your computer:
   - RColorBrewer v1.1.3
   - ggridges v0.5.4
 
-We have bundled R functions to model drift and selection in growing and homeostatic tissues in the R package FLORENCE. Please download and install from (https://github.com/VerenaK90/FLORENCE) and refer to the accompanying vignette for further information on FLORENCE.
+We have bundled R functions to model drift and selection in growing and homeostatic tissues in the R package FLORENCE. Please download and install from (https://github.com/VerenaK90/FLORENCE/trees/paper) and refer to the accompanying vignette for further information on FLORENCE.
 
 Download and install python3 and pyABC von your computer.
 
@@ -71,11 +71,11 @@ To estimate the model parameters, we used FLORENCE in conjunction with pyABC. To
 - *min.prior.size*, the lower limit of clone sizes scanned by the parameter estimation. Parameter setzs associated with clones < min.clone.size will be evaluated with the neutral model. Defaults to 0.01; we used 0.01 for all instances except for single cell WGS and simulated data with 270x, where we used 0.001.
 - *use.sensitivity* should sequencing sensitivity information be included in addition to binomial sampling? Defaults to F; if T, a matrix *false.negative.per.vaf* with columns corresponding to the measured VAFs and rows corresponding to individual measurements of the false negative rate at this VAF in addition to binomial noise must be provided. We used use.sensitivity=F.
 
-The script Run_model_sim*x.R is to be sourced by [ABC_fit.py](Parameter_estimation/ABC_fit.py]. Hence, please also modify the paths in this file. The python script also contains the definition of the prior distributions. Note that we chose priors running between 0 and 0.99 for s and between 0 and 1 for t_s, but these values are relative values only that will be converted into absolute values by the model script [Bayesian_fit.R](Parameter_estimation/Bayesian_fit.R). Specifically, the minimal and maximal values of s and t_s are chosen such that the clone has a minimal size of *min.prior.size* and a maximal size of 1. Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to (Analyze_and_plot_fits_sim_data.R)[Analysis_and_figures/Analyze_and_plot_fits_sim_data.R]).
+The script Run_model_sim*x.R is to be sourced by [ABC_fit.py](Parameter_estimation/ABC_fit.py]. Hence, please also modify the paths in this file. The python script also contains the definition of the prior distributions. Note that we chose priors running between 0 and 0.99 for s and between 0 and 1 for t_s, but these values are relative values only that will be converted into absolute values by the model script [Bayesian_fit.R](Parameter_estimation/Bayesian_fit.R). Specifically, the minimal and maximal values of s and t_s are chosen such that the clone has a minimal size of *min.prior.size* and a maximal size of 1. Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to [Analyze_and_plot_fits_sim_data.R](Analysis_and_figures/Analyze_and_plot_fits_sim_data.R)).
   
 ### Analysis and plots
 
-Upon parameter estimation, the posterior probabilities (which can be downloaded from Mendeley) were analyzed using the script (Analyze_and_plot_fits_sim_data.R)[Analysis_and_figures/Analyze_and_plot_fits_sim_data.R]. This script 
+Upon parameter estimation, the posterior probabilities (which can be downloaded from Mendeley) were analyzed using the script [Analyze_and_plot_fits_sim_data.R](Analysis_and_figures/Analyze_and_plot_fits_sim_data.R). This script 
 - plots for each instance the model fit and the highest density estimates of each parameter
 - computes statistics of the fits - %posterior probability supporting the selection model and the neutral model
 - evaluates true and false positives for different clone sizes and sequencing depths, constructs the corresponding ROC curves and computes the AUC at the selected operating point
@@ -90,7 +90,7 @@ We tested our model on pseudo-bulk WGS data from published single-cell WGS data 
 #### Lee-Six et al.
 Download the data from https://doi.org/10.17632/yzjw2stk7f.1 and store them in ./Lee-Six_et_al/Caveman/. In addition, download the re-called data from our repository (**fill-in**) and store them in ./Lee-Six_et_al/Mutect_Strelka.
 
-The script (Pseudo_VAFs_LeeSix_et_al.R)[Data_preprocessing/Pseudo_VAFs_LeeSix_et_al.R] first compares the results of Caveman and Mutect/Strelka (**Fig. S2b,c**). It progresses to generate the pseudo-bulk data and to plot the VAF distributions as shown in **Fig. 3b, S2X**. It also plots the trees as shown in **Fig. 3a**. Finally, it stores two list objects containing the VAFs in (Caveman/SNVs.RData)[RData/Lee-Six_et_al/Caveman/SNVs.RData] and (Mutect_Strelka/SNVs.RData)[RData/Lee-Six_et_al/Mutect_Strelka/SNVs.RData]. Alternatively, these objects can be directly downloaded from Mendeley.
+The script [Pseudo_VAFs_LeeSix_et_al.R](Data_preprocessing/Pseudo_VAFs_LeeSix_et_al.R) first compares the results of Caveman and Mutect/Strelka (**Fig. S2b,c**). It progresses to generate the pseudo-bulk data and to plot the VAF distributions as shown in **Fig. 3b, S2X**. It also plots the trees as shown in **Fig. 3a**. Finally, it stores two list objects containing the VAFs in [Caveman/SNVs.RData](RData/Lee-Six_et_al/Caveman/SNVs.RData) and [Mutect_Strelka/SNVs.RData](RData/Lee-Six_et_al/Mutect_Strelka/SNVs.RData). Alternatively, these objects can be directly downloaded from Mendeley.
 
 #### Mitchell et al.
 
@@ -101,7 +101,7 @@ The script (Pseudo_VAFs_Mitchell_et_al.R)[Data_preprocessing/Pseudo_VAFs_Mitchel
 #### Fabre et al.
 Download the data of id2259 from doi.org/10.6084/m9.figshare.15029118 and structure them like: ./Fabre_et_al/*/.
 
-The script (Pseudo_VAFs_Fabre_et_al.R)[Data_preprocessing/Pseudo_VAFs_Fabre_et_al.R] generates the pseudo-bulk data and plots the VAF distribution as shown in **Fig. XX**. It also plots the trees as shown in **Fig. XX**. Finally, it stores a list object containing the VAFs in (SNVs.RData)[RData/Fabre_et_al/SNVs.RData]. Alternatively, this object can be directly downloaded from Mendeley.
+The script [Pseudo_VAFs_Fabre_et_al.R](Data_preprocessing/Pseudo_VAFs_Fabre_et_al.R) generates the pseudo-bulk data and plots the VAF distribution as shown in **Extended Data Fig. 2g**. It also plots the trees as shown in **Extended Data Fig. 2g**. Finally, it stores a list object containing the VAFs in [SNVs.RData](RData/Fabre_et_al/SNVs.RData). Alternatively, this object can be directly downloaded from Mendeley.
 
 ### Parameter inference
 
@@ -120,11 +120,11 @@ As with the simulated data, we used FLORENCE in conjunction with pyABC to estima
 
 In contrast to bulk WGS data sequenced at 90x, we here lowered the resolution a bit for the single-cell sequencing data. Moreover, we specify the number of sequenced cells and run the parameter estimation in single-cell mode, allowing for the simulation of single-cell sequencing and generation of pseudo-bulk data thereof. 
 
-The script Run_model_scWGS.R is to be sourced by [ABC_fit.py](Parameter_estimation/ABC_fit.py]. Hence, please also modify the paths in this file. The python script also contains the definition of the prior distributions. Note that we chose priors running between 0 and 0.99 for s and between 0 and 1 for t_s, but these values are relative values only that will be converted into absolute values by the model script [Bayesian_fit.R](Parameter_estimation/Bayesian_fit.R). Specifically, the minimal and maximal values of s and t_s are chosen such that the clone has a minimal size of *min.prior.size* and a maximal size of 1. Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to (Plot_fits_published_data.R)[Analysis_and_figures/Plot_fits_published_data.R]).
+The script Run_model_scWGS.R is to be sourced by [ABC_fit.py](Parameter_estimation/ABC_fit.py]. Hence, please also modify the paths in this file. The python script also contains the definition of the prior distributions. Note that we chose priors running between 0 and 0.99 for s and between 0 and 1 for t_s, but these values are relative values only that will be converted into absolute values by the model script [Bayesian_fit.R](Parameter_estimation/Bayesian_fit.R). Specifically, the minimal and maximal values of s and t_s are chosen such that the clone has a minimal size of *min.prior.size* and a maximal size of 1. Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to [Plot_fits_published_data.R](Analysis_and_figures/Plot_fits_published_data.R)).
 
 ### Analysis and plots
 
-Once the parameter estimation has been finished, extract .csv-files from the .db files using the function abc-export (or directly download them from Mendeley). The fits can then be inspected using the script (Plot_fits_published_data.R)[Analysis_and_plots/Plot_fits_published_data.R].
+Once the parameter estimation has been finished, extract .csv-files from the .db files using the function abc-export (or directly download them from Mendeley). The fits can then be inspected using the script [Plot_fits_published_data.R](Analysis_and_plots/Plot_fits_published_data.R).
 
 This script
 - plots model vs data for each sample (as shown in **Fig. 3b,f,l, Extended Data Fig. 2d,f,g**)
@@ -141,7 +141,7 @@ We ran the model on the filtered SNVs (called using Strelka and Mutect2, see man
 
 ### Parameter inference
 
-As with the other data types, we used FLORENCE in conjunction with pyABC to estimate parameters. To re-run the analysis refer to the folder (Parameter_estimation) and modify Simulated_data/Run_model_WGS_data.R according to the sample specification, with emphasis on the following information
+As with the other data types, we used FLORENCE in conjunction with pyABC to estimate parameters. To re-run the analysis refer to the folder (Parameter_estimation) and modify [Simulated_data/Run_model_WGS_data.R] according to the sample specification, with emphasis on the following information
 
 - *patient.id*, the ID/name of the analyzed subject
 - *sort*, the cell sort to be analyzed ("CD34", "MNC", "MNC_minus_T" or "PB_gran")
@@ -153,11 +153,11 @@ As with the other data types, we used FLORENCE in conjunction with pyABC to esti
 - *min.prior.size*, the lower limit of clone sizes scanned by the parameter estimation. Parameter setzs associated with clones < min.clone.size will be evaluated with the neutral model. We used 0.01, according to the detection limit of 90x WGS.
 - *use.sensitivity* should sequencing sensitivity information be included in addition to binomial sampling? Defaults to F; if T, a matrix *false.negative.per.vaf* with columns corresponding to the measured VAFs and rows corresponding to individual measurements of the false negative rate at this VAF in addition to binomial noise must be provided. We used use.sensitivity=F.
 
-The script Run_model_WGS.R is to be sourced by [ABC_fit.py](Parameter_estimation/ABC_fit.py]. Hence, please also modify the paths in this file. The python script also contains the definition of the prior distributions. Note that we chose priors running between 0 and 0.99 for s and between 0 and 1 for t_s, but these values are relative values only that will be converted into absolute values by the model script [Bayesian_fit.R](Parameter_estimation/Bayesian_fit.R). Specifically, the minimal and maximal values of s and t_s are chosen such that the clone has a minimal size of *min.prior.size* and a maximal size of 1. Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to (Plot_fits_WGS_data.R)[Analysis_and_figures/Plot_fits_WGS.R]).
+The script Run_model_WGS.R is to be sourced by [ABC_fit.py](Parameter_estimation/ABC_fit.py]. Hence, please also modify the paths in this file. The python script also contains the definition of the prior distributions. Note that we chose priors running between 0 and 0.99 for s and between 0 and 1 for t_s, but these values are relative values only that will be converted into absolute values by the model script [Bayesian_fit.R](Parameter_estimation/Bayesian_fit.R). Specifically, the minimal and maximal values of s and t_s are chosen such that the clone has a minimal size of *min.prior.size* and a maximal size of 1. Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to [Plot_fits_WGS_data.R](Analysis_and_figures/Plot_fits_WGS.R)).
 
 ### Analysis and plots
 
-As with the pseudo-bulk data, extract .csv-files from the .db files using the function abc-export (or directly download them from Mendeley). The fits can then be inspected using the script (Plot_fits_WGS_data.R)[Analysis_and_figures/Plot_fits_WGS_data.R].
+As with the pseudo-bulk data, extract .csv-files from the .db files using the function abc-export (or directly download them from Mendeley). The fits can then be inspected using the script [Plot_fits_WGS_data.R](Analysis_and_figures/Plot_fits_WGS_data.R).
 
 This script
 - plots data only for the neutral cases (**Fig. 4c**)
