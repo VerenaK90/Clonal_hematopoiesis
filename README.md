@@ -157,7 +157,7 @@ The script Run_model_WGS.R is to be sourced by [ABC_fit.py](Parameter_estimation
 
 ### Analysis and plots
 
-As with the pseudo-bulk data, extract .csv-files from the .db files using the function abc-export (or directly download them from Mendeley). The fits can then be inspected using the script (Analysis_and_plots/Plot_fits_WGS.R)[Analysis_and_plots/Plot_fits_WGS.R].
+As with the pseudo-bulk data, extract .csv-files from the .db files using the function abc-export (or directly download them from Mendeley). The fits can then be inspected using the script (Analysis_and_plots/Plot_fits_WGS_data.R)[Analysis_and_plots/Plot_fits_WGS_data.R].
 
 This script
 - plots data only for the neutral cases (**Fig. 4c**)
