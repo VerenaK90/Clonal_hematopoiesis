@@ -88,7 +88,7 @@ We tested our model on pseudo-bulk WGS data from published single-cell WGS data 
 ### Generation of pseudo-bulk data 
 
 #### Lee-Six et al.
-Download the data from https://doi.org/10.17632/yzjw2stk7f.1 and store them in ./Lee-Six_et_al/Caveman/. In addition, download the re-called data from our repository (**fill-in**) and store them in ./Lee-Six_et_al/Mutect_Strelka.
+Download the data from https://doi.org/10.17632/yzjw2stk7f.1 and store them in ./Lee-Six_et_al/Caveman/. In addition, download the re-called data from our repository (https://doi.org/10.17632/yvxdb7t3yk.1) and store them in ./Lee-Six_et_al/Mutect_Strelka.
 
 The script [Pseudo_VAFs_LeeSix_et_al.R](Data_preprocessing/Pseudo_VAFs_LeeSix_et_al.R) first compares the results of Caveman and Mutect/Strelka (**Extended Data Fig. 2b,c**). It progresses to generate the pseudo-bulk data and to plot the VAF distributions as shown in **Fig. 3b, Extended Data Fig. 2d**. It also plots the trees as shown in **Fig. 3a**. Finally, it stores two list objects containing the VAFs in [Caveman/SNVs.RData](RData/Lee-Six_et_al/Caveman/SNVs.RData) and [Mutect_Strelka/SNVs.RData](RData/Lee-Six_et_al/Mutect_Strelka/SNVs.RData). Alternatively, these objects can be directly downloaded from Mendeley.
 
