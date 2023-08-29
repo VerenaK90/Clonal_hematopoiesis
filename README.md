@@ -1,4 +1,4 @@
-# Clonal_hemopoiesis
+# Clonal_hematopoiesis
 This repository contains code to reproduce analysis in Körber et al., Quantifying drift and selection from a single bulk tissue sample. It consists of the follwoing parts:
 
 - [Before you start](#before-you-start)
