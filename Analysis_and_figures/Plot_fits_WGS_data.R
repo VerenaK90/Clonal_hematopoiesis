@@ -369,9 +369,9 @@ for(patient.id in patient.ids){
     ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ######
     ###### Plot fits for neutral and selected case
 
-    source(paste0(custom.script.directory, "Parameter_estimation/Bayesian_fit.R"))
+    source(paste0(custom.script.directory, "/Parameter_estimation/Bayesian_fit.R"))
 
-    if( !file.exists(paste0(directory "/Sim_trajectories.RData") )){
+    if( !file.exists(paste0(directory, "/Sim_trajectories.RData"))){
 
       # simulate for 100 parameter sets
       sim<- matrix(0, nrow=100, ncol=length(mySumStatData$mutation.count[[1]]))
@@ -599,7 +599,7 @@ ggplot(to.plot[to.plot$Sample=="CD34" & !is.na(to.plot$`Posterior probability`) 
 dev.off()
 
 ## compare with other tissues
-pdf(paste0(analysis.directory, "/Figures/Supplementary_Figure_1.pdf"), width=6, height=6)
+pdf(paste0(analysis.directory, "/Figures/Supplementary_Figure_2.pdf"), width=6, height=6)
 
 to.plot <- to.plot[!is.na(to.plot$`Posterior probability`),]
 to.plot <- to.plot[to.plot$ID %in% names(table(to.plot$ID))[table(to.plot$ID)==2*4],] # select samples with all 4 tissues sequenced
@@ -857,10 +857,6 @@ to.plot$Driver.mean <- apply(to.plot, 1, function(x){
 
   driver.information <- putative.drivers[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
                                             colnames(putative.drivers)[grep(type, colnames(putative.drivers))])]
-  if(type=="CD34+"){
-    driver.information <- driver.information[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
-                                                colnames(driver.information)[grep( "_CD38", colnames(driver.information), invert = T)])]
-  }
   driver.information <- driver.information[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
                                               colnames(driver.information)[grep(paste0(x["Sample"], "_"), colnames(driver.information))])]
   driver.information$VAF <- Extract.info.from.vcf(driver.information, info="VAF", mutationcaller = "mpileup", sample.col.mpileup = ncol(driver.information))
@@ -885,10 +881,6 @@ to.plot$Driver.min <- apply(to.plot, 1, function(x){
   }
   driver.information <- putative.drivers[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
                                             colnames(putative.drivers)[grep(type, colnames(putative.drivers))])]
-  if(type=="CD34+"){
-    driver.information <- driver.information[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
-                                                colnames(driver.information)[grep( "_CD38", colnames(driver.information), invert = T)])]
-  }
   driver.information <- driver.information[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
                                               colnames(driver.information)[grep(paste0(x["Sample"], "_"), colnames(driver.information))])]
   driver.information$VAF <- Extract.info.from.vcf(driver.information, info="VAF", mutationcaller = "mpileup", sample.col.mpileup = ncol(driver.information))
@@ -918,10 +910,6 @@ to.plot$Driver.max <- apply(to.plot, 1, function(x){
   }
   driver.information <- putative.drivers[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
                                             colnames(putative.drivers)[grep(type, colnames(putative.drivers))])]
-  if(type=="CD34+"){
-    driver.information <- driver.information[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
-                                                colnames(driver.information)[grep( "_CD38", colnames(driver.information), invert = T)])]
-  }
   driver.information <- driver.information[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
                                               colnames(driver.information)[grep(paste0(x["Sample"], "_"), colnames(driver.information))])]
   driver.information$VAF <- Extract.info.from.vcf(driver.information, info="VAF", mutationcaller = "mpileup", sample.col.mpileup = ncol(driver.information))
@@ -1068,8 +1056,6 @@ ggplot(to.plot[ to.plot$Tissue=="CD34",],
 dev.off()
 
 
-
-
 ####################################################################################################################################################
 ## Fig. 5f-h: Compare physiological parameters between neutrally evolving cases and cases with selection
 
@@ -1120,7 +1106,7 @@ to.plot$ID <- sample.info[to.plot$Sample,]$Paper_ID
 
 pdf(paste0(analysis.directory, "Figures/Figure_5i.pdf"), width=3.5, height=2.5)
 
-## only HSCs
+## subset on HSCs
 
 ggplot(to.plot[ to.plot$Tissue=="CD34",],
        aes(x=ID, y=Median, ymin=lower, ymax=upper, col = CHIP.mutation)) +
@@ -1139,7 +1125,7 @@ to.plot$ID <- sample.info[to.plot$Sample,]$Paper_ID
 
 pdf(paste0(analysis.directory, "Figures/Figure_5j.pdf"), width=5, height=2.5)
 
-## only HSCs
+## subset on HSCs
 
 ggplot(to.plot[ to.plot$Tissue=="CD34",],
        aes(x=ID, y=Median, ymin=lower, ymax=upper, col = CHIP.mutation)) +
@@ -1255,7 +1241,7 @@ to.plot$ID <- sample.info[to.plot$Sample,]$Paper_ID
 
 pdf(paste0(analysis.directory, "Figures/Figure_6d.pdf"), width=5, height=2.5)
 
-## only HSCs
+## subset on HSCs
 
 ggplot(to.plot[ to.plot$Tissue=="CD34",],
        aes(x=ID, y=Median, ymin=lower, ymax=upper)) +
@@ -1289,7 +1275,7 @@ to.plot$ID <- sample.info[to.plot$Sample,]$Paper_ID
 
 pdf(paste0(analysis.directory, "Figures/Figure_6e.pdf"), width=5, height=2.5)
 
-## only HSCs
+## subset on HSCs
 
 ggplot(to.plot[ to.plot$Tissue=="CD34",],
        aes(x=ID, y=Median, ymin=lower, ymax=upper)) +
