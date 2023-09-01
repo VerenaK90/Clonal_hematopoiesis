@@ -431,8 +431,6 @@ for(patient.id in sample.info$SampleID){
 save(parameters, neutral.parameters, selected.parameters, plotlist.model.vs.data, model.support.selection, inference.stats,
      file="RData/Simulated_data/Cohort_parameters.RData")
 
-
-
 ######################### ######################### ######################### ######################### #########################
 ### Figure 2a-c: ROC curve for varying thresholds
 
@@ -508,7 +506,7 @@ print(p3)
 dev.off()
 
 ######################### ######################### ######################### ######################### #########################
-### Figure S1d, compute AUC; add point 1/1 to every combination
+### Figure S1c, compute AUC; add point 1/1 to every combination
 
 auc <- data.frame()
 
@@ -539,14 +537,12 @@ for(size in unique(roc.270$size)){
                           size = size, depth=270))
 }
 
-pdf(paste0(analysis.directory, "/Figures/Figure_S1_d.pdf"), width=4, height = 3)
+pdf(paste0(analysis.directory, "/Figures/Figure_S1_c.pdf"), width=4, height = 3)
 
 ggplot(auc, aes(x=size, y=AUC, group=depth, linetype=as.character(depth))) + geom_line() + scale_x_log10(limits=c(1, 100)) +
   scale_y_continuous(limits = c(0.5,1)) + geom_vline(xintercept = 10, linetype=2)
 
 dev.off()
-
-
 
 ######################### ######################### ######################### ######################### #########################
 ## Fig. 2d: apply the identified cutoffs to the simulated 90x data (minimal 5% VAF and 15% posterior probability)
