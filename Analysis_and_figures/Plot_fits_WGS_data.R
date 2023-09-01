@@ -84,9 +84,9 @@ for(patient.id in patient.ids){
     ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ######
     ###### load observed data
 
-    directory <- paste0(analysis.directory, "/Model_fits/", patient.id, "/Model_fit/")
-    if(!file.exists(paste0(directory, "/", tissue, "/Model_fit.csv"))){next}
-    fits <- read.csv(paste0(directory, "/", tissue, "/Model_fit.csv"))
+    directory <- paste0(analysis.directory, "/Model_fits/WGS/", paste(patient.id, tissue, sep="_"))
+    if(!file.exists(paste0(directory, "/Model_fit.csv"))){next}
+    fits <- read.csv(paste0(directory, "/Model_fit.csv"))
 
     if(tissue == "CD34"){
       tissue.type = "CD34+"
@@ -117,7 +117,7 @@ for(patient.id in patient.ids){
     ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ######
     #### Print parameter estimates
 
-    pdf(paste0(directory, tissue, "/Parameter_estimates.pdf"), width=5, height=5)
+    pdf(paste0(directory, "/Parameter_estimates.pdf"), width=5, height=5)
 
     # the model converts the prior distribution for t_s and s into absolute values to match clones within the limits of min.prior.size and N. We here convert the parameter estimates accordingly.
     fits$par_t_s_absolute <- apply(fits, 1, function(x){
@@ -369,9 +369,9 @@ for(patient.id in patient.ids){
     ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ######
     ###### Plot fits for neutral and selected case
 
-    source(paste0(custom.script.directory, "/Bayesian_fit.R"))
+    source(paste0(custom.script.directory, "Parameter_estimation/Bayesian_fit.R"))
 
-    if( !file.exists(paste0(analysis.directory, patient.id, "/Model_fit/", tissue, "/Sim_trajectories.RData") )){
+    if( !file.exists(paste0(directory "/Sim_trajectories.RData") )){
 
       # simulate for 100 parameter sets
       sim<- matrix(0, nrow=100, ncol=length(mySumStatData$mutation.count[[1]]))
@@ -396,16 +396,16 @@ for(patient.id in patient.ids){
                                        min.model= min.pred, max.model=max.pred,
                                        Age=mySumStatData$age/365)
 
-      save(sim, data.vs.prediction, file=paste0(analysis.directory, patient.id, "/Model_fit/", tissue, "/Sim_trajectories.RData"))
+      save(sim, data.vs.prediction, file=paste0(directory, "/Sim_trajectories.RData"))
 
     }else{
-      load(paste0(analysis.directory, patient.id, "/Model_fit/", tissue, "/Sim_trajectories.RData"))
+      load(paste0(directory, "/Sim_trajectories.RData"))
     }
 
     to.plot <- data.vs.prediction
 
     # plot the model fits
-    grDevices::pdf(paste0(directory, tissue, "/Model_fit.pdf"), width=3, height=2.5)
+    grDevices::pdf(paste0(directory, "/Model_fit.pdf"), width=3, height=2.5)
 
     max.y <- max(to.plot$max.model)
 
