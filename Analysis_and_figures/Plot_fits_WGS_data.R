@@ -474,7 +474,7 @@ clearly.selected.samples <- setdiff(colnames(model.support.selection)[model.supp
 selection.no.driver <-  intersect(c(chip.samples.unknown.driver, normal.samples), colnames(model.support.selection)[model.support.selection["CD34",]>=15])
 neutral.driver <- intersect(colnames(model.support.selection)[model.support.selection["CD34",]<15],c(chip.samples, chip.samples.unknown.driver))
 ####################################################################################################################################################
-## Figures 4a/ 5a / 6a / S4, S6, Suppplementary Figure 2: plot the model fits stratified by type
+## Figures 4a/ 5a / 6a / S4, S6, Supplementary Figure 3: plot the model fits stratified by type
 
 # clearly neutral:
 pdf(paste0(analysis.directory, "/Figures/Figure_4a_S4.pdf"), width=8, height=8)
@@ -520,7 +520,7 @@ n.div <- 6/selected.parameters[selected.parameters$Sample=="U6" & selected.param
 
 # driver but no evidence for selection
 
-pdf(paste0(analysis.directory, "/Figures/Supplementary_Figure_2_a_right.pdf"), width=8, height=8)
+pdf(paste0(analysis.directory, "/Figures/Supplementary_Figure_3_a_right.pdf"), width=8, height=8)
 
 ggarrange(plotlist=plotlist.model.vs.data[names(plotlist.model.vs.data) %in%
                                             paste(neutral.driver, "CD34+")],
@@ -529,7 +529,7 @@ ggarrange(plotlist=plotlist.model.vs.data[names(plotlist.model.vs.data) %in%
 dev.off()
 
 ####################################################################################################################################################
-## Fig. 4b, 5b, 6b, Supplementary Figures 1, 2a: plot the posterior probability for the neutral and the selection model for each sample
+## Fig. 4b, 5b, 6b, Supplementary Figures 1, 3a: plot the posterior probability for the neutral and the selection model for each sample
 
 to.plot <- melt(t(model.support.selection), value.name = "P_selection")
 colnames(to.plot)[c(1,2)] <- c("Patient", "Sample")
@@ -589,7 +589,7 @@ dev.off()
 
 ## samples with driver but no evidence for selection
 
-pdf(paste0(analysis.directory, "/Figures/Supplementary_Figure_2a.pdf"), width=6, height=6)
+pdf(paste0(analysis.directory, "/Figures/Supplementary_Figure_3a.pdf"), width=6, height=6)
 
 ggplot(to.plot[to.plot$Sample=="CD34" & !is.na(to.plot$`Posterior probability`) & to.plot$Patient %in% neutral.driver,],
        aes(x=ID, y=`Posterior probability`, fill=Clone_size)) + geom_col(width=0.5, col="black") +
@@ -645,9 +645,9 @@ ggplot(to.plot, aes(x=1/VAF, y=MutationCount, col=Age, group=Sample)) + geom_poi
 dev.off()
 
 ####################################################################################################################################################
-## Figure 4d, e, Supp1a: compare the physiological parameters in normal samples estimates across the cohort
+## Figure 4d, e: compare the physiological parameters in normal samples estimates across the cohort
 
-pdf(paste0(analysis.directory, "/Figures/Figure_4d_e_Supp1a.pdf"), width=5, height=w)
+pdf(paste0(analysis.directory, "/Figures/Figure_4d_e.pdf"), width=5, height=w)
 
 ## Stem cell number
 ## CD34+
@@ -751,9 +751,9 @@ dev.off()
 
 
 ####################################################################################################################################################
-## Supplementary Fig. 2b: physiological parameters in a case with neutral dynamics but known CH driver
+## Supplementary Fig. 3b: physiological parameters in a case with neutral dynamics but known CH driver
 
-pdf(paste0(analysis.directory, "/Figures/Supplementary_Figure_2b.pdf"), width=5, height=3.5)
+pdf(paste0(analysis.directory, "/Figures/Supplementary_Figure_3b.pdf"), width=5, height=3.5)
 
 ## Stem cell number
 
