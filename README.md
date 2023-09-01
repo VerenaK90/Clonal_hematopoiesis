@@ -95,39 +95,39 @@ We tested our model on pseudo-bulk WGS data from published single-cell WGS data 
 ### Generation of pseudo-bulk data 
 
 #### Lee-Six et al.
-Download the data from https://doi.org/10.17632/yzjw2stk7f.1 and store them in ./Lee-Six_et_al/Caveman/. In addition, download the re-called data from our repository (https://doi.org/10.17632/yvxdb7t3yk.1) and store them in ./Lee-Six_et_al/Mutect_Strelka.
+Download the data from https://doi.org/10.17632/yzjw2stk7f.1 and store them in ./Published_data/Lee-Six_et_al/Caveman/. In addition, download the re-called data from our repository (https://doi.org/10.17632/yvxdb7t3yk.1) and store them in ./Lee-Six_et_al/Mutect_Strelka.
 
-The script [Pseudo_VAFs_LeeSix_et_al.R](Data_preprocessing/Pseudo_VAFs_LeeSix_et_al.R) first compares the results of Caveman and Mutect/Strelka (**Extended Data Fig. 2b,c**). It progresses to generate the pseudo-bulk data and to plot the VAF distributions as shown in **Fig. 3b, Extended Data Fig. 2d**. It also plots the trees as shown in **Fig. 3a**. Finally, it stores two list objects containing the VAFs in [Caveman/SNVs.RData](RData/Lee-Six_et_al/Caveman/SNVs.RData) and [Mutect_Strelka/SNVs.RData](RData/Lee-Six_et_al/Mutect_Strelka/SNVs.RData). Alternatively, these objects can be directly downloaded from Mendeley.
+The script [Pseudo_VAFs_LeeSix_et_al.R](Data_preprocessing/Pseudo_VAFs_LeeSix_et_al.R) first compares the results of Caveman and Mutect/Strelka (**Extended Data Fig. 2b,c**). Thereafter, it generates the pseudo-bulk data and plots the VAF distributions as shown in **Fig. 3b, Extended Data Fig. 2d**. Finally, it stores two list objects containing the VAFs in [Caveman/SNVs.RData](RData/Lee-Six_et_al/Caveman/SNVs.RData) and [Mutect_Strelka/SNVs.RData](RData/Lee-Six_et_al/Mutect_Strelka/SNVs.RData). Alternatively, these objects can be directly downloaded from Mendeley.
 
 #### Mitchell et al.
 
-Download the data from https://data.mendeley.com/datasets/np54zjkvxr/1 and structure them like: ./Mitchell_et_al/*/.
+Download the data from https://data.mendeley.com/datasets/np54zjkvxr/1 and structure them like: ./Published_data/Mitchell_et_al/*/.
 
 The script (Pseudo_VAFs_Mitchell_et_al.R)[Data_preprocessing/Pseudo_VAFs_Mitchell_et_al.R] generates the pseudo-bulk data and plots the VAF distributions as shown in **Fig. 3f,l, Extended Data Fig. 2e, f**. It also plots the trees as shown in **Fig. 3e,k**. Finally, it stores a list object containing the VAFs for each sample in (SNVs.RData)[RData/Mitchell_et_al/SNVs.RData]. Alternatively, this object can be directly downloaded from Mendeley.
 
 #### Fabre et al.
-Download the data of id2259 from doi.org/10.6084/m9.figshare.15029118 and structure them like: ./Fabre_et_al/*/.
+Download the data of id2259 from doi.org/10.6084/m9.figshare.15029118 and structure them like: ./Published_data/Fabre_et_al/*/.
 
 The script [Pseudo_VAFs_Fabre_et_al.R](Data_preprocessing/Pseudo_VAFs_Fabre_et_al.R) generates the pseudo-bulk data and plots the VAF distribution as shown in **Extended Data Fig. 2g**. It also plots the trees as shown in **Extended Data Fig. 2g**. Finally, it stores a list object containing the VAFs in [SNVs.RData](RData/Fabre_et_al/SNVs.RData). Alternatively, this object can be directly downloaded from Mendeley.
 
-### Parameter inference
+### Parameter estimation
 
 As with the simulated data, we used FLORENCE in conjunction with pyABC to estimate parameters. To re-run the analysis refer to the folder (Parameter_estimation) and modify Simulated_data/Run_model_scWGS.R according to the sample specification, with emphasis on the following information
 
 - `patient.id`, the ID/name of the analyzed subject
-- `age`, the age (in days)
-- `snvs`, a named list containing VAF information for each individual 
-- `depth`, the sequencing depth used to generate the data 
+- `age`, the age (in days; can be retrieved from MetaData/Sample_info_published_data.xlsx)
+- `snvs`, a named list containing VAF information for each individual (e.g., provided in RData/Mitchell_et_al/SNVs.RData)
+- `depth`, the sequencing depth used to generate the data; can be arbitrarily set here, as we will use the "sc" mode (see below, `seq.type`)
 - `min.vaf`, the smallest VAF in the data that is to be compared to the model. Defaults to 0.05; we used `min.vaf=0.01` due to the high pseudo-bulk coverage.
 - `min.clone.size`, the minimal clone size that can be detected by the model. Defaults to 0.05; we used `min.clone.size=0.01` due to the high pseudo-bulk coverage.
 - `min.prior.size`, the lower limit of clone sizes scanned by the parameter estimation. Parameter setzs associated with clones < min.clone.size will be evaluated with the neutral model. We used `min.prior.size=0.001` due to the high pseudo-bulk coverage.
 - `ncells`, the number of sequenced cells
-- `seq.type`, has to be set to "sc", as we analyze pseudo-bulks from single-cells
+- `seq.type`, has to be set to `seq.type="sc"`, as we analyze pseudo-bulks from single-cells
 - `use.sensitivity` should sequencing sensitivity information be included in addition to binomial sampling? Defaults to F; if T, a matrix `false.negative.per.vaf` with columns corresponding to the measured VAFs and rows corresponding to individual measurements of the false negative rate at this VAF in addition to binomial noise must be provided. We set `use.sensitivity=F`.
 
-In contrast to bulk WGS data sequenced at 90x, we here lowered the resolution a bit for the single-cell sequencing data. Moreover, we specify the number of sequenced cells and run the parameter estimation in single-cell mode, allowing for the simulation of single-cell sequencing and generation of pseudo-bulk data thereof. 
+In comparison to bulk WGS data sequenced at 90x, we here lowered the lower VAF limits, as the single-cell sequencing data provide higher resolution. Moreover, we specified the number of sequenced cells and run the parameter estimation in single-cell mode, allowing for the simulation of single-cell sequencing and generation of pseudo-bulk data thereof. 
 
-The script Run_model_scWGS.R is to be sourced by [ABC_fit.py](Parameter_estimation/ABC_fit.py]. Hence, please also modify the paths in this file. The python script also contains the definition of the prior distributions. Note that we chose priors running between 0 and 0.99 for s and between 0 and 1 for t_s, but these values are relative values only that will be converted into absolute values by the model script [Bayesian_fit.R](Parameter_estimation/Bayesian_fit.R). Specifically, the minimal and maximal values of s and t_s are chosen such that the clone has a minimal size of *min.prior.size* and a maximal size of 1. Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to [Plot_fits_published_data.R](Analysis_and_figures/Plot_fits_published_data.R)).
+The script [Run_model_scWGS.R](Parameter_estimation/Run_model_scWGS.R) is to be sourced by [ABC_fit.py](Parameter_estimation/ABC_fit.py). Hence, please also modify the paths in this file. The python script also contains the definition of the prior distributions. Note that we chose priors running between 0 and 0.99 for s and between 0 and 1 for t_s, but these values are relative values only that will be converted into absolute values by the model script [Bayesian_fit.R](Parameter_estimation/Bayesian_fit.R). Specifically, the minimal and maximal values of s and t_s are chosen such that the clone has a minimal size of `min.prior.size and a maximal size of 1. Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to [Plot_fits_published_data.R](Analysis_and_figures/Plot_fits_published_data.R)).
 
 ### Analysis and plots
 
