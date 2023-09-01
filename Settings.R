@@ -55,10 +55,10 @@ sample.info$CHIP.mutation.associated.with.fit <- sapply(sample.info$Paper_ID, fu
 samples <- rownames(sample.info)
 normal.samples <- samples[sample.info$CHIP.mutation.associated.with.fit=="no driver"]
 
-chip.samples.unknown.driver <- samples[sample.info$CHIP.mutation.associated.with.fit=="unknown mutation"]
+chip.samples.unknown.driver <- samples[sample.info$CHIP.mutation.associated.with.fit=="unknown driver"]
 
 chip.samples <- samples[sample.info$CHIP.mutation.associated.with.fit!="no driver" &
-                          sample.info$CHIP.mutation.associated.with.fit != "unknown mutation"]
+                          sample.info$CHIP.mutation.associated.with.fit != "unknown driver"]
 
 ############################################################################################################################################
 ### read in sample information for published data
