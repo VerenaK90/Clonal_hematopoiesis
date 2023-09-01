@@ -20,8 +20,8 @@ seq.type="sc"
 parameters <- data.frame()
 neutral.parameters <- data.frame()
 selected.parameters <- data.frame()
-evidence.for.subclone <- rep(NA, nrow(sample.info.published.data))
-names(evidence.for.subclone) <- sample.info.published.data$ID
+model.support.selection <- rep(NA, nrow(sample.info.published.data))
+names(model.support.selection) <- sample.info.published.data$ID
 
 plotlist.model.vs.data <- list()
 
@@ -277,9 +277,9 @@ for(patient in 1:nrow(sample.info.published.data)){
     
     if(nrow(fits.selection)>0){
       size.of.selected.clone <- median(fits$size_of_clone[fits$size_of_clone>=0.05])
-      evidence.for.subclone[patient.id] <- nrow(fits.selection)/10
+      model.support.selection[patient.id] <- nrow(fits.selection)/10
     }else{
-      evidence.for.subclone[patient.id] <- 0
+      model.support.selection[patient.id] <- 0
     }
     
     
@@ -392,7 +392,7 @@ for(patient in 1:nrow(sample.info.published.data)){
       scale_x_continuous(limits=xlimits) + coord_cartesian(ylim=c(0, max.y))
     
     ## if the selection model fits the data, illustrate the position of the selected clone
-    if(evidence.for.subclone[patient.id]>=15){
+    if(model.support.selection[patient.id]>=15){
       p <- p + geom_ribbon(data= data.frame(x=2/(unlist(hdinterval.selection[hdinterval.selection$Parameter=="size_of_clone",c("lower", "upper")])),
                                             ymin=c(0,0), ymax=c(max.y, max.y)),
                            aes(x = x, ymin=ymin, ymax=ymax), fill="grey", alpha=0.5, inherit.aes = F)
@@ -407,28 +407,28 @@ for(patient in 1:nrow(sample.info.published.data)){
 
 }
 
-save(parameters, neutral.parameters, selected.parameters, evidence.for.subclone, plotlist.model.vs.data, file= paste0(rdata.directory, "Cohort_parameters_published_data.RData"))
+save(parameters, neutral.parameters, selected.parameters, model.support.selection, plotlist.model.vs.data, file= paste0(rdata.directory, "Cohort_parameters_published_data.RData"))
 
 ############################################################################################################################################
 ## Classify samples
 
 ## normal samples (no driver, no evidence for selection)
 normal.samples.published.data <- sample.info.published.data[sample.info.published.data$CHIP.mutation %in% c("healthy donor", "unknown driver"),]$ID
-normal.samples.published.data <- intersect(normal.samples.published.data, names(evidence.for.subclone)[evidence.for.subclone<15]) ## require < 15 for clear-cut normals
+normal.samples.published.data <- intersect(normal.samples.published.data, names(model.support.selection)[model.support.selection<15]) ## require < 15 for clear-cut normals
 
 ## selected samples (driver and evidence for selection)
 selected.samples.published.data <- sample.info.published.data[!sample.info.published.data$CHIP.mutation %in% c("healthy donor", "unknown driver", "multiple drivers"),]$ID
-selected.samples.published.data <- intersect(selected.samples.published.data, names(evidence.for.subclone)[evidence.for.subclone>=15]) ## require < 15 for clear-cut normals
+selected.samples.published.data <- intersect(selected.samples.published.data, names(model.support.selection)[model.support.selection>=15]) ## require < 15 for clear-cut normals
 
 ## selected samples (no driver, but evidence for selection)
 selected.no.driver.published.data <- sample.info.published.data[sample.info.published.data$CHIP.mutation %in% c("healthy donor", "unknown driver", "multiple drivers"),]$ID
-selected.no.driver.published.data <- intersect(selected.no.driver.published.data, names(evidence.for.subclone)[evidence.for.subclone>=15]) ## require < 15 for clear-cut normals
+selected.no.driver.published.data <- intersect(selected.no.driver.published.data, names(model.support.selection)[model.support.selection>=15]) ## require < 15 for clear-cut normals
 
 ############################################################################################################################################
-## Fig. 3c, e, m, Plot evidence for selection per sample
+## Fig. 3c, g, m, Plot evidence for selection per sample
 
-to.plot <- data.frame(Patient = names(evidence.for.subclone),
-                      P_selection = evidence.for.subclone)
+to.plot <- data.frame(Patient = names(model.support.selection),
+                      P_selection = model.support.selection)
 to.plot$P_neutral <- 100 - to.plot$P_selection
 to.plot <- melt(to.plot, value.name = "Posterior probability")
 
@@ -443,7 +443,7 @@ to.plot$Clone_size <- apply(to.plot, 1, function(x){
 to.plot$variable <- factor(to.plot$variable, levels=c("P_neutral", "P_selection"))
 to.plot$Clone_size[to.plot$Clone_size==0] <- NA
 
-pdf("./Figures/Figure_3c_e_m.pdf", width=6, height=6)
+pdf("./Figures/Figure_3c_g_m.pdf", width=6, height=6)
 
 ## normals only
 to.plot.normals <- to.plot[to.plot$Patient %in% normal.samples.published.data,]
