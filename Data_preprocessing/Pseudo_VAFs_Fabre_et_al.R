@@ -8,7 +8,7 @@ library(cgwtools)
 library(phytools)
 
 source("Simulated_data/Tree_post_processing.R") ## source modalities to extract information from trees
-folders <- list.files("./Fabre_et_al/", pattern = "id")
+folders <- list.files("./Published_data/Fabre_et_al/", pattern = "id")
 
 driver.colors <- c("SF3B1" = "orange", "CBL" = "purple", CTCF = "purple", TET2 = "firebrick", U2AF1 = "green",
                    SRSF2 = "firebrick", PPM1D = "firebrick", TP53 = "firebrick") 
@@ -16,8 +16,8 @@ snvs <- list()
 
 for(i in folders){
   
-  tree.file <- list.files(paste0("./Fabre_et_al/", i), pattern = "tree", full.names = T)
-  mut.file <- list.files(paste0("./Fabre_et_al/", i), pattern = "details", full.names = T)
+  tree.file <- list.files(paste0("./Published_data/Fabre_et_al/", i), pattern = "tree", full.names = T)
+  mut.file <- list.files(paste0("./Published_data/Fabre_et_al/", i), pattern = "details", full.names = T)
   
   load(tree.file)
   load(mut.file)
@@ -70,7 +70,7 @@ for(i in folders){
   }
   
   
-  pdf(paste0("./Fabre_et_al/", i, "/VAFs.pdf"), width=6, height = 6)
+  pdf(paste0("./Published_data/Fabre_et_al/", i, "/VAFs.pdf"), width=6, height = 6)
   
   print(ggarrange(plotlist=p, nrow=2, ncol=2))
   
@@ -82,7 +82,7 @@ for(i in folders){
 
   tree <- tree_SNV_c_ultra
   
-  pdf(paste0("./Fabre_et_al/", i, "/Trees.pdf"), width=6, height = 6)
+  pdf(paste0("./Published_data/Fabre_et_al/", i, "/Trees.pdf"), width=6, height = 6)
   
   plot.phylo(tree, use.edge.length = TRUE, show.tip.label = F, direction = "downwards", edge.color = tree$edge.color)
   axisPhylo(side=4, backward = F)

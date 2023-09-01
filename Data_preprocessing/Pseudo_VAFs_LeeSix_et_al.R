@@ -5,9 +5,9 @@ library(ggplot2); theme_set(theme(panel.grid.major = element_blank(), panel.grid
                                   axis.text = element_text(size=8, color="black")))
 ############################################################################################################################################
 ## Read in data
-lee.six.mutect.strelka <- read.delim("./Lee-Six_et_al/Mutect_Strelka/Mut_table_mutect_strelka.csv", sep=",")
+lee.six.mutect.strelka <- read.delim("./Published_data/Lee-Six_et_al/Mutect_Strelka/Mut_table_mutect_strelka.csv", sep=",")
 identifiers.mutect.strelka <- paste(lee.six.mutect.strelka$chr, lee.six.mutect.strelka$pos,  sep=".")
-lee.six.caveman <- read.delim("./Lee-Six_et_al/Caveman/Shearwater_calls_FDR0.95_all_muts.txt", sep="\t")
+lee.six.caveman <- read.delim("./Published_data/Lee-Six_et_al/Caveman/Shearwater_calls_FDR0.95_all_muts.txt", sep="\t")
 lee.six.caveman <- lee.six.caveman[,-ncol(lee.six.caveman)]
 ## subset on SNVs
 lee.six.caveman <- lee.six.caveman[lee.six.caveman$ALT %in% c("A", "C", "G", "T") &
@@ -56,7 +56,7 @@ dev.off()
 
 lee.six.pb <- rowSums(lee.six.mutect.strelka[,-c(1:2)]!=0, na.rm=T)/(rowSums(!is.na(lee.six.mutect.strelka[,-c(1:2)]!=0)))/2
 snvs <- list(Lee_Six = lee.six.pb)
-save(snvs, file=paste0(data.directory, "/Lee-Six_et_al/Mutect_Strelka/SNVs.RData"))
+save(snvs, file=paste0(data.directory, "/RData/Lee-Six_et_al/Mutect_Strelka/SNVs.RData"))
 
 
 pdf(paste0(analysis.directory, "Figures/Figure_3b.pdf"), width=4, height=3)
@@ -88,5 +88,5 @@ ggplot(to.plot[to.plot$VAF>=0.01,], aes(x=VAF)) + geom_histogram(binwidth = 0.01
 dev.off()
 
 snvs <- list(Lee_Six = lee.six.pb)
-save(snvs, file="./Lee-Six_et_al/Caveman/SNVs.RData")
+save(snvs, file="./RData/Lee-Six_et_al/Caveman/SNVs.RData")
 
