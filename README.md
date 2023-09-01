@@ -45,7 +45,7 @@ Download and install R v4.2.0 and the following packages on your computer:
   - dplyr v1.0.9
   - scales v1.2.1
 
-We have bundled R functions to model drift and selection in growing and homeostatic tissues in the R package FLORENCE. Please download and install from (https://github.com/VerenaK90/FLORENCE/trees/paper) and refer to the accompanying vignette for further information on FLORENCE.
+We have bundled R functions to model drift and selection in growing and homeostatic tissues in the R package FLORENCE. Please download and install from (https://github.com/VerenaK90/FLORENCE/tree/paper) and refer to the accompanying vignette for further information on FLORENCE.
 
 Download and install python3 and pyABC von your computer.
 
