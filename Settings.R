@@ -28,6 +28,7 @@ library(FLORENCE)
 
 custom.script.directory <- "./"
 analysis.directory <- "./"
+dir.create(paste(analysis.directory, "Figures", sep="/"))
 meta.data <- "./MetaData/"
 rdata.directory <- "./RData/"
 
