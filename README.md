@@ -12,12 +12,13 @@ This repository contains code to reproduce analysis in Körber et al., Quantifyi
 - [Real data](#real-data)
   This section explains how the model was applied to the actual data.
 
-To reproduce (parts of) the analysis, please download the supplementary tables, the associated data from Mendeley (doi: 10.17632/yvxdb7t3yk.1) and adjust the directories in [Settings.R](Settings.R). Refer to [Before you start](#before-you-start) for a list of R libraries used.
+To reproduce (parts of) the analysis, please download the supplementary tables, the associated data from Mendeley (doi: 10.17632/yvxdb7t3yk.1) and adjust the directories in [Settings.R](Settings.R). Refer to [Before you start](#before-you-start) for a list of R libraries that should be installed.
 
 ## Before you start
 
 Download and install R v4.2.0 and the following packages on your computer:
 - CRAN
+  - bedr v1.0.7
   - ape v5.6-2
   - phytools v1.2-0
   - phangorn v2.10.0
@@ -33,12 +34,17 @@ Download and install R v4.2.0 and the following packages on your computer:
   - cgwtools v3.3
   - ggVennDiagram v1.2.2
   - ggbeeswarm v0.6.0
+  - ggformula v0.10.2
   - ggsci v2.9
   - Hmisc v4.7.1
   - lemon v0.4.5
   - data.table v1.14.2
   - RColorBrewer v1.1.3
   - ggridges v0.5.4
+  - wesanderson v0.3.6
+  - HDInterval v0.2.2
+  - reshape2 v1.4.4
+  - dplyr v1.0.9
 
 We have bundled R functions to model drift and selection in growing and homeostatic tissues in the R package FLORENCE. Please download and install from (https://github.com/VerenaK90/FLORENCE/trees/paper) and refer to the accompanying vignette for further information on FLORENCE.
 
