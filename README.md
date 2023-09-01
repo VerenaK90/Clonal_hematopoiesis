@@ -6,7 +6,7 @@ This repository contains code to reproduce analysis in Körber et al., Quantifyi
 - [Parameter estimation](#parameter-estimation)
   This section explains how to do the parameter estimation from bulk WGS data. 
 - [Simulated data](#simulated-data)
-  This section explains how the simulated data were generated and how the model was learnt on them.
+  This section explains how the simulated data were generated and how the model was applied to these data.
 - [Published single cell WGS data](#published-single-cell-wgs-data)
   This section explains how the model was applied to published single-cell WGS data.
 - [Real data](#real-data)
