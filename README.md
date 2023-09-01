@@ -3,14 +3,12 @@ This repository contains code to reproduce analysis in Körber et al., Quantifyi
 
 - [Before you start](#before-you-start)
   This section gives an overview of the software and data used for the analysis.
-- [Parameter estimation](#parameter-estimation)
-  This section explains how to do the parameter estimation from bulk WGS data. 
 - [Simulated data](#simulated-data)
   This section explains how the simulated data were generated and how the model was applied to these data.
 - [Published single cell WGS data](#published-single-cell-wgs-data)
   This section explains how the model was applied to published single-cell WGS data.
-- [Real data](#real-data)
-  This section explains how the model was applied to the actual data.
+- [Bulk WGS data](#bulk-WGS-data)
+  This section explains how the model was applied to the newly generated bulk WGS data.
 
 To reproduce (parts of) the analysis, please download the supplementary tables, the associated data from Mendeley (doi: 10.17632/yvxdb7t3yk.1) and adjust the directories in [Settings.R](Settings.R). Refer to [Before you start](#before-you-start) for a list of R libraries that should be installed.
 
@@ -146,7 +144,7 @@ This script
 
 We ran the model on the filtered SNVs (called using Strelka and Mutect2, see manuscript for details), which we stored, for convenience, in the list object (./RData/WGS/SNVs.RData). 
 
-### Parameter inference
+### Parameter estimation
 
 As with the other data types, we used FLORENCE in conjunction with pyABC to estimate parameters. To re-run the analysis refer to the folder (Parameter_estimation) and modify [Simulated_data/Run_model_WGS_data.R] according to the sample specification, with emphasis on the following information
 
@@ -158,9 +156,9 @@ As with the other data types, we used FLORENCE in conjunction with pyABC to esti
 - `min.vaf`, the smallest VAF in the data that is to be compared to the model. We used `min.vaf=0.05`, according to the detection limit of 90x WGS.
 - `min.clone.size`, the minimal clone size that can be detected by the model. We used `min.clone.size=0.05`, according to the detection limit of 90x WGS.
 - `min.prior.size`, the lower limit of clone sizes scanned by the parameter estimation. Parameter setzs associated with clones < min.clone.size will be evaluated with the neutral model. We used `min.prior.size=0.01`, according to the detection limit of 90x WGS.
-- `use.sensitivity` should sequencing sensitivity information be included in addition to binomial sampling? Defaults to F; if T, a matrix *false.negative.per.vaf* with columns corresponding to the measured VAFs and rows corresponding to individual measurements of the false negative rate at this VAF in addition to binomial noise must be provided. We used `use.sensitivity=F`.
+- `use.sensitivity` should sequencing sensitivity information be included in addition to binomial sampling? Defaults to F; if T, a matrix `false.negative.per.vaf` with columns corresponding to the measured VAFs and rows corresponding to individual measurements of the false negative rate at this VAF in addition to binomial noise must be provided. We used `use.sensitivity=F`.
 
-The script Run_model_WGS.R is to be sourced by [ABC_fit.py](Parameter_estimation/ABC_fit.py]. Hence, please also modify the paths in this file. The python script also contains the definition of the prior distributions. Note that we chose priors running between 0 and 0.99 for s and between 0 and 1 for t_s, but these values are relative values only that will be converted into absolute values by the model script [Bayesian_fit.R](Parameter_estimation/Bayesian_fit.R). Specifically, the minimal and maximal values of s and t_s are chosen such that the clone has a minimal size of *min.prior.size* and a maximal size of 1. Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to [Plot_fits_WGS_data.R](Analysis_and_figures/Plot_fits_WGS.R)).
+The script Run_model_WGS.R is to be sourced by [ABC_fit.py](Parameter_estimation/ABC_fit.py). Hence, please also modify the paths in this file. The python script also contains the definition of the prior distributions. Note that we chose priors running between 0 and 0.99 for s and between 0 and 1 for t_s, but these values are relative values only that will be converted into absolute values by the model script [Bayesian_fit.R](Parameter_estimation/Bayesian_fit.R). Specifically, the minimal and maximal values of s and t_s are chosen such that the clone has a minimal size of `min.prior.size` and a maximal size of 1. Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to [Plot_fits_WGS_data.R](Analysis_and_figures/Plot_fits_WGS.R)).
 
 ### Analysis and plots
 
