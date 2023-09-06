@@ -472,12 +472,11 @@ for(patient.id in patient.ids){
 clearly.neutral.samples <- intersect(normal.samples, colnames(model.support.selection)[model.support.selection["CD34",]<15])
 clearly.selected.samples <- setdiff(colnames(model.support.selection)[model.support.selection["CD34",]>=15],c(chip.samples.unknown.driver, normal.samples))
 selection.no.driver <-  intersect(c(chip.samples.unknown.driver, normal.samples), colnames(model.support.selection)[model.support.selection["CD34",]>=15])
-neutral.driver <- intersect(colnames(model.support.selection)[model.support.selection["CD34",]<15],c(chip.samples, chip.samples.unknown.driver))
 ####################################################################################################################################################
-## Figures 4a/ 5a / 6a / S4, S6, Supplementary Figure 3: plot the model fits stratified by type
+## Figures 4a/ 5a / 6a / S5, S7: plot the model fits stratified by type
 
 # clearly neutral:
-pdf(paste0(analysis.directory, "/Figures/Figure_4a_S4.pdf"), width=8, height=8)
+pdf(paste0(analysis.directory, "/Figures/Figure_4a_S5.pdf"), width=8, height=8)
 
 ggarrange(plotlist=plotlist.model.vs.data[names(plotlist.model.vs.data) %in%
                                             paste(clearly.neutral.samples, "CD34+")],
@@ -486,7 +485,7 @@ dev.off()
 
 
 # clearly selected:
-pdf(paste0(analysis.directory, "/Figures/Figure_5a_S6.pdf"), width=8, height=8)
+pdf(paste0(analysis.directory, "/Figures/Figure_5a_S7.pdf"), width=8, height=8)
 
 ggarrange(plotlist=plotlist.model.vs.data[names(plotlist.model.vs.data) %in%
                                             paste(clearly.selected.samples, "CD34+")],
@@ -518,15 +517,6 @@ dev.off()
 n.div <- 6/selected.parameters[selected.parameters$Sample=="U6" & selected.parameters$Tissue=="CD34" &
                                  selected.parameters$Parameter=="par_mu" ,c("lower", "Median", "upper")]
 
-# driver but no evidence for selection
-
-pdf(paste0(analysis.directory, "/Figures/Supplementary_Figure_3_a_right.pdf"), width=8, height=8)
-
-ggarrange(plotlist=plotlist.model.vs.data[names(plotlist.model.vs.data) %in%
-                                            paste(neutral.driver, "CD34+")],
-          nrow=6, ncol=6)
-
-dev.off()
 
 ####################################################################################################################################################
 ## Fig. 4b, 5b, 6b, Supplementary Figures 1, 3a: plot the posterior probability for the neutral and the selection model for each sample
@@ -587,16 +577,6 @@ ggplot(to.plot[to.plot$Sample=="CD34" & !is.na(to.plot$`Posterior probability`) 
 
 dev.off()
 
-## samples with driver but no evidence for selection
-
-pdf(paste0(analysis.directory, "/Figures/Supplementary_Figure_3a.pdf"), width=6, height=6)
-
-ggplot(to.plot[to.plot$Sample=="CD34" & !is.na(to.plot$`Posterior probability`) & to.plot$Patient %in% neutral.driver,],
-       aes(x=ID, y=`Posterior probability`, fill=Clone_size)) + geom_col(width=0.5, col="black") +
-  scale_fill_gradientn(colors=hcl.colors(n = 7, palette="Zissou 1"), breaks=c(0.05, 0.10, 0.25, 0.50), trans="log10", limits=c(0.025, 1)) +
-  ggtitle("CD34 no evidence for selection despite driver")+ theme( strip.background = element_blank() ) + geom_hline(yintercept = 15, linetype=2)
-
-dev.off()
 
 ## compare with other tissues
 pdf(paste0(analysis.directory, "/Figures/Supplementary_Figure_2.pdf"), width=6, height=6)
@@ -750,89 +730,6 @@ ggplot(to.plot[ to.plot$Tissue=="CD34",],
 dev.off()
 
 
-####################################################################################################################################################
-## Supplementary Fig. 3b: physiological parameters in a case with neutral dynamics but known CH driver
-
-pdf(paste0(analysis.directory, "/Figures/Supplementary_Figure_3b.pdf"), width=5, height=3.5)
-
-## Stem cell number
-
-to.plot <- melt(neutral.parameters[neutral.parameters$Parameter=="par_N"  ,],
-                id.vars = c("Sample", "lower", "upper", "Parameter", "Tissue"), value.name = "Median")
-to.plot <- to.plot[to.plot$Sample %in% neutral.driver,]
-to.plot$Patient.ID <- factor(sample.info[to.plot$Sample, ]$Paper_ID)
-to.plot$CHIP.mutation <- sample.info[to.plot$Sample,]$CHIP.mutation.associated.with.fit
-to.plot$CHIP.mutation <- factor(to.plot$CHIP.mutation, levels=c("ASXL1", "DNMT3A", "TET2", "unknown driver", "no driver"))
-
-## take medians of lower and upper quantiles of the neutral samples for comparison
-to.plot.quantiles <- data.frame(min = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                        neutral.parameters$Parameter=="par_N" &
-                                                                        neutral.parameters$Tissue=="CD34",]$lower, p = 0.025), 2),
-                                max = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                        neutral.parameters$Parameter=="par_N"&
-                                                                        neutral.parameters$Tissue=="CD34",]$upper, p = 0.975), 2),
-                                x=c(0, sum( to.plot$Tissue=="CD34")))
-
-ggplot(to.plot,
-       aes(x=Patient.ID, y=Median, ymin=lower, ymax=upper)) + geom_pointrange(fatten = 0.5) +
-  geom_ribbon(data=to.plot.quantiles, aes(ymin = min, ymax = max, x=x), inherit.aes = F, fill="grey", alpha = 0.7) +
-  geom_pointrange(fatten = 0.5) + scale_color_manual(values=sample.color) +
-  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Stem cell number (log10)") +
-  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0)
-
-
-## Mutation rate
-
-to.plot <- melt(neutral.parameters[neutral.parameters$Parameter=="par_mu"  ,],
-                id.vars = c("Sample", "lower", "upper", "Parameter"), value.name = "Median")
-to.plot <- to.plot[to.plot$Sample %in% neutral.driver,]
-to.plot$Patient.ID <- factor(sample.info[to.plot$Sample, ]$Paper_ID)
-to.plot$CHIP.mutation <- sample.info[to.plot$Sample,]$CHIP.mutation.associated.with.fit
-to.plot$CHIP.mutation <- factor(to.plot$CHIP.mutation, levels=c("ASXL1", "DNMT3A", "TET2", "unknown driver", "no driver"))
-
-## take medians of lower and upper quantiles of the neutral samples for comparison
-to.plot.quantiles <- data.frame(min = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                        neutral.parameters$Parameter=="par_mu" &
-                                                                        neutral.parameters$Tissue=="CD34",]$lower, p = 0.025), 2),
-                                max = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                neutral.parameters$Parameter=="par_mu"&
-                                                                neutral.parameters$Tissue=="CD34",]$upper, p = 0.975), 2),
-                                x=c(0, sum( to.plot$Tissue=="CD34")))
-
-ggplot(to.plot,
-       aes(x=Patient.ID, y=Median, ymin=lower, ymax=upper, col=Tissue)) + geom_pointrange(fatten = 0.5) +
-  geom_ribbon(data=to.plot.quantiles, aes(ymin = min, ymax = max, x=x), inherit.aes = F, fill="grey", alpha = 0.7) +
-  geom_pointrange(fatten = 0.5) + scale_color_manual(values=sample.color) +
-  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Number of SSNVs per division") +
-  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0)
-
-
-## Division rate, compare between all sorts
-
-to.plot <- melt(neutral.parameters[neutral.parameters$Parameter=="par_lambda_ss"  ,],
-                id.vars = c("Sample", "lower", "upper", "Parameter", "Tissue"), value.name = "Median")
-to.plot <- to.plot[to.plot$Sample %in% neutral.driver,]
-to.plot$Patient.ID <- factor(sample.info[to.plot$Sample, ]$Paper_ID)
-to.plot$CHIP.mutation <- sample.info[to.plot$Sample,]$CHIP.mutation.associated.with.fit
-to.plot$CHIP.mutation <- factor(to.plot$CHIP.mutation, levels=c("ASXL1", "DNMT3A", "TET2", "unknown driver", "no driver"))
-
-## take medians of lower and upper quantiles of the neutral samples for comparison
-to.plot.quantiles <- data.frame(min = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                        neutral.parameters$Parameter=="par_lambda_ss" &
-                                                                        neutral.parameters$Tissue=="CD34",]$lower, p = 0.025), 2),
-                                max = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                        neutral.parameters$Parameter=="par_lambda_ss"&
-                                                                        neutral.parameters$Tissue=="CD34",]$upper, p = 0.975), 2),
-                                x=c(0, sum( to.plot$Tissue=="CD34")))
-
-ggplot(to.plot,
-       aes(x=Patient.ID, y=365*10^Median, ymin=365*10^lower, ymax=365*10^upper, col=Tissue)) + geom_pointrange(fatten = 0.5) +
-  geom_ribbon(data=to.plot.quantiles, aes(ymin = 365*10^min, ymax = 365*10^max, x=x), inherit.aes = F, fill="grey", alpha = 0.7) +
-  geom_pointrange(fatten = 0.5) + scale_color_manual(values=sample.color) +
-  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Division rate (1/y)") +
-  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0)
-
-dev.off()
 
 ####################################################################################################################################################
 ## Figure 5c: compare the estimated clone size with the driver VAF
@@ -1059,12 +956,12 @@ dev.off()
 ####################################################################################################################################################
 ## Fig. 5f-h: Compare physiological parameters between neutrally evolving cases and cases with selection
 
-to.plot <- neutral.parameters[neutral.parameters$Sample %in% c(clearly.neutral.samples, neutral.driver),]
+to.plot <- neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples,]
 to.plot <- rbind(to.plot, selected.parameters[ selected.parameters$Sample %in% clearly.selected.samples,])
 to.plot$CHIP.mutation <- sample.info[to.plot$Sample,]$CHIP.mutation.associated.with.fit
 to.plot$ID <- sample.info[to.plot$Sample,]$Paper_ID
 to.plot$Age <- sample.info[to.plot$Sample,]$Age
-to.plot$Type <- ifelse(to.plot$Sample %in% c(clearly.neutral.samples, neutral.driver), "Neutral", "Selection")
+to.plot$Type <- ifelse(to.plot$Sample %in% clearly.neutral.samples, "Neutral", "Selection")
 
 pdf(paste0(analysis.directory, "Figures/Figure_5_f_g_h.pdf"), width=5, height=2.5)
 
