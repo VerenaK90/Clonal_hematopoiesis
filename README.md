@@ -166,9 +166,9 @@ As with the pseudo-bulk data, extract .csv-files from the .db files using the fu
 
 This script
 - plots data only for the neutral cases (**Fig. 4c**)
-- plots model vs data for each sample (as shown in **Figs. 4a, 5a, 6a, Extended Data Fig. 4, Supplementry Fig. 3a**)
-- classifies individual cases as neutrally evolving or selected (as shown in **Figs. 4b, 5b, 6b, Supplementary Fig. 2, Supplementary Fig. 3a**)
+- plots model vs data for each sample (as shown in **Figs. 4a, 5a, 6a, Extended Data Fig. 5**)
+- classifies individual cases as neutrally evolving or selected (as shown in **Figs. 4b, 5b, 6b, Supplementary Fig. 2**)
 - compares estimated clone sizes to VAFs of known drivers (**Fig. 5c**)
-- computes highest density estimates for the parameters (as shown in **Fig. 4d, e, 5d-j, 6c-e, Supplementary Fig. 3b**)
+- computes highest density estimates for the parameters (as shown in **Fig. 4d, e, 5d-j, 6c-e**)
 - compares the estimated parameters between samples with and without selection (as shown in **Fig. 6d, e**)
 - computes the cumulative age-incidence of CH driver acquisition (**Fig. 7**)
