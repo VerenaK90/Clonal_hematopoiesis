@@ -2,7 +2,7 @@ rm(list=ls())
 ####### load libraries
 library(deSolve)
 library(openxlsx)
-library(FLORENCE)
+library(SCIFER)
 ###### load functions
 
 patient.id <- 'AX001' # specify patient ID here

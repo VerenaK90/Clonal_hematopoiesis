@@ -2,7 +2,7 @@ rm(list=ls())
 ####### load libraries
 library(deSolve)
 library(openxlsx)
-library(DriftAndSelection)
+library(SCIFER)
 ###### load functions
 
 patient.id='STS1' 
