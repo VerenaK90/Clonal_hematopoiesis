@@ -45,7 +45,7 @@ Download and install R v4.2.0 and the following packages on your computer:
   - dplyr v1.0.9
   - scales v1.2.1
 
-We have bundled R functions to model drift and selection in growing and homeostatic tissues in the R package FLORENCE. Please download and install from (https://github.com/VerenaK90/FLORENCE/tree/paper) and refer to the accompanying vignette for further information on FLORENCE.
+We have bundled R functions to model drift and selection in growing and homeostatic tissues in the R package SCIFER. Please download and install from (https://github.com/VerenaK90/SCIFER/tree/paper) and refer to the accompanying vignette for further information on SCIFER.
 
 Download and install python3 and pyABC von your computer.
 
@@ -55,17 +55,17 @@ To reproduce the analysis, please check the file structure and make sure the req
 
 ## Variant allele frequencies shaped by drift and selection in homeostatic tissues
 
-FLORENCE predicts that drift and selection shape the variant allele frequency distribution distinctly. We predict VAF distributions for different parameter sets and time points in the script [Theoretical_model_performance.R](Analysis_and_figures/Theoretical_model_performance.R). The script also produces the figure panels in **Figure 1**, **Extended Data Fig. 1a** and **Supplementary Fig. 1**.
+SCIFER predicts that drift and selection shape the variant allele frequency distribution distinctly. We predict VAF distributions for different parameter sets and time points in the script [Theoretical_model_performance.R](Analysis_and_figures/Theoretical_model_performance.R). The script also produces the figure panels in **Figure 1**, **Extended Data Fig. 1a** and **Supplementary Fig. 1**.
 
 ## Simulated data
 
 ### Tree and VAF simulation
 
-To test the ability of FLORENCE to distinguish selection and drift dynamics, we simulated division trees. Of these, we simulated WGS data by binomial sampling of a simulated bulk sample and applied FLORENCE to these data. To reproduce the analysis, run the scripts [Neutral_tree.R](Simulated_data/Neutral_tree.R) and [Selected_tree.R](Simulated_data/Selected_tree.R) to simulate neutrally evolving trees and trees with a selected clone instigated at 20 years. The scripts source the scripts [Simulate_trees.R](Simulated_data/Simulate_trees.R) and [Tree_post_processing.R](Simulated_data/Tree_post_processing.R), which contain the modalities for tree simulation. Finally, to generate the VAF distributions which were used to assess the performance of FLORENCE, run [Study_design.R](Simulated_data/Study_design.R), which adds binomial noise to the simulated VAFs and generates the simulated data sets as outlined in (MetaData/Sample_information_simulated_data.xlsx).
+To test the ability of SCIFER to distinguish selection and drift dynamics, we simulated division trees. Of these, we simulated WGS data by binomial sampling of a simulated bulk sample and applied SCIFER to these data. To reproduce the analysis, run the scripts [Neutral_tree.R](Simulated_data/Neutral_tree.R) and [Selected_tree.R](Simulated_data/Selected_tree.R) to simulate neutrally evolving trees and trees with a selected clone instigated at 20 years. The scripts source the scripts [Simulate_trees.R](Simulated_data/Simulate_trees.R) and [Tree_post_processing.R](Simulated_data/Tree_post_processing.R), which contain the modalities for tree simulation. Finally, to generate the VAF distributions which were used to assess the performance of SCIFER, run [Study_design.R](Simulated_data/Study_design.R), which adds binomial noise to the simulated VAFs and generates the simulated data sets as outlined in (MetaData/Sample_information_simulated_data.xlsx).
 
 ### Parameter estimation
 
-To estimate the model parameters, we used FLORENCE in conjunction with pyABC. To re-run the analysis refer to the folder (Parameter_estimation) and modify Parameter_estimation/Run_model_sim*x.R according to the sample specification. Specifically, you should provide the following information:
+To estimate the model parameters, we used SCIFER in conjunction with pyABC. To re-run the analysis refer to the folder (Parameter_estimation) and modify Parameter_estimation/Run_model_sim*x.R according to the sample specification. Specifically, you should provide the following information:
 
 - `patient.id`, the ID/name of the analyzed subject
 - `age`, the age (in days, can be retrieved from Sample_information_simulated_data.xlsx)
@@ -110,7 +110,7 @@ The script [Pseudo_VAFs_Fabre_et_al.R](Data_preprocessing/Pseudo_VAFs_Fabre_et_a
 
 ### Parameter estimation
 
-As with the simulated data, we used FLORENCE in conjunction with pyABC to estimate parameters. To re-run the analysis refer to the folder (Parameter_estimation) and modify Simulated_data/Run_model_scWGS.R according to the sample specification, with emphasis on the following information
+As with the simulated data, we used SCIFER in conjunction with pyABC to estimate parameters. To re-run the analysis refer to the folder (Parameter_estimation) and modify Simulated_data/Run_model_scWGS.R according to the sample specification, with emphasis on the following information
 
 - `patient.id`, the ID/name of the analyzed subject
 - `age`, the age (in days; can be retrieved from MetaData/Sample_info_published_data.xlsx)
@@ -146,7 +146,7 @@ We ran the model on the filtered SNVs (called using Strelka and Mutect2, see man
 
 ### Parameter estimation
 
-As with the other data types, we used FLORENCE in conjunction with pyABC to estimate parameters. To re-run the analysis refer to the folder (Parameter_estimation) and modify [Simulated_data/Run_model_WGS_data.R] according to the sample specification, with emphasis on the following information
+As with the other data types, we used SCIFER in conjunction with pyABC to estimate parameters. To re-run the analysis refer to the folder (Parameter_estimation) and modify [Simulated_data/Run_model_WGS_data.R] according to the sample specification, with emphasis on the following information
 
 - `patient.id`, the ID/name of the analyzed subject
 - `sort`, the cell sort to be analyzed ("CD34", "MNC", "MNC_minus_T" or "PB_gran")
