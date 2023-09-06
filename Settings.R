@@ -21,7 +21,7 @@ library(Hmisc)
 library(ggbeeswarm)
 library(lemon)
 library(data.table)
-library(FLORENCE)
+library(SCIFER)
 
 ##############################################################################################################################################
 ## set directories
