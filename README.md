@@ -1,5 +1,5 @@
 # Clonal_hematopoiesis
-This repository contains code to reproduce analysis in Körber et al., Detecting and quantifying clonal selection in somatic mosaicism. It consists of the follwoing parts:
+This repository contains code to reproduce analysis in Körber et al., Detecting and quantifying clonal selection in somatic stem cells. It consists of the follwoing parts:
 
 - [Before you start](#before-you-start)
   This section gives an overview of the software and data used for the analysis.
