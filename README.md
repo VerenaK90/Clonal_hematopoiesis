@@ -55,7 +55,7 @@ To reproduce the analysis, please check the file structure and make sure the req
 
 ## Variant allele frequencies shaped by drift and selection in homeostatic tissues
 
-SCIFER predicts that drift and selection shape the variant allele frequency distribution distinctly. We predict VAF distributions for different parameter sets and time points in the script [Theoretical_model_performance.R](Analysis_and_figures/Theoretical_model_performance.R). The script also produces the figure panels in **Figure 1**, **Extended Data Fig. 1a** and **Supplementary Fig. 1**.
+SCIFER predicts that drift and selection shape the variant allele frequency distribution distinctly. We predict VAF distributions for different parameter sets and time points in the script [Theoretical_model_performance.R](Analysis_and_figures/Theoretical_model_performance.R). The script also produces the figure panels in **Figure 1** and **Supplementary Fig. 1**.
 
 ## Simulated data
 
@@ -84,7 +84,7 @@ Upon parameter estimation, the posterior probabilities (which can be downloaded 
 - plots for each instance the model fit and the highest density estimates of each parameter
 - computes statistics of the fits - %posterior probability supporting the selection model and the neutral model
 - evaluates true and false positives for different clone sizes and sequencing depths, constructs the corresponding ROC curves and computes the AUC at the selected operating point
-- this script generates the figure panels for **Fig. 2** and **Exteded Data Fig. 1c**.
+- this script generates the figure panels for **Fig. 2**.
 
 ## Published single cell WGS data
 
@@ -101,7 +101,7 @@ The script [Pseudo_VAFs_LeeSix_et_al.R](Data_preprocessing/Pseudo_VAFs_LeeSix_et
 
 Download the data from https://data.mendeley.com/datasets/np54zjkvxr/1 and structure them like: ./Published_data/Mitchell_et_al/*/.
 
-The script (Pseudo_VAFs_Mitchell_et_al.R)[Data_preprocessing/Pseudo_VAFs_Mitchell_et_al.R] generates the pseudo-bulk data and plots the VAF distributions as shown in **Fig. 3f,l, Extended Data Fig. 2e, f**. It also plots the trees as shown in **Fig. 3e,k**. Finally, it stores a list object containing the VAFs for each sample in (SNVs.RData)[RData/Mitchell_et_al/SNVs.RData]. Alternatively, this object can be directly downloaded from Mendeley.
+The script (Pseudo_VAFs_Mitchell_et_al.R)[Data_preprocessing/Pseudo_VAFs_Mitchell_et_al.R] generates the pseudo-bulk data and plots the VAF distributions as shown in **Fig. 3h, n, Extended Data Fig. 2e, f**. It also plots the trees as shown in **Fig. 3g, m**. Finally, it stores a list object containing the VAFs for each sample in (SNVs.RData)[RData/Mitchell_et_al/SNVs.RData]. Alternatively, this object can be directly downloaded from Mendeley.
 
 #### Fabre et al.
 Download the data of id2259 from doi.org/10.6084/m9.figshare.15029118 and structure them like: ./Published_data/Fabre_et_al/*/.
@@ -132,10 +132,10 @@ The script [Run_model_scWGS.R](Parameter_estimation/Run_model_scWGS.R) is to be 
 Once the parameter estimation has been finished, extract .csv-files from the .db files using the function abc-export (or directly download them from Mendeley). The fits can then be inspected using the script [Plot_fits_published_data.R](Analysis_and_plots/Plot_fits_published_data.R).
 
 This script
-- plots model vs data for each sample (as shown in **Fig. 3b,f,l, Extended Data Figs. 2d,f,g**)
-- classifies individual cases as neutrally evolving or selected (as shown in **Fig. 3c,g,m**)
-- computes highest density estimates for the parameters (as shown in **Figs. 3d,j,n,o**)
-- compares the estimated age of the selected clones to the original studies (as shown in **Fig. 3h**).
+- plots model vs data for each sample (as shown in **Fig. 3b,h,n, Extended Data Figs. 2d,f,g**)
+- classifies individual cases as neutrally evolving or selected (as shown in **Fig. 3c,i,o**)
+- computes highest density estimates for the parameters (as shown in **Figs. 3d-f,k,l,p**)
+- compares the estimated age of the selected clones to the original studies (as shown in **Fig. 3j**).
 
 
 ## Bulk WGS data
@@ -169,6 +169,6 @@ This script
 - plots model vs data for each sample (as shown in **Figs. 4a, 5a, 6a, Extended Data Fig. 5**)
 - classifies individual cases as neutrally evolving or selected (as shown in **Figs. 4b, 5b, 6b, Supplementary Fig. 2**)
 - compares estimated clone sizes to VAFs of known drivers (**Fig. 5c**)
-- computes highest density estimates for the parameters (as shown in **Fig. 4d, e, 5d-j, 6c-e**)
-- compares the estimated parameters between samples with and without selection (as shown in **Fig. 6d, e**)
-- computes the cumulative age-incidence of CH driver acquisition (**Fig. 7**)
+- computes highest density estimates for the parameters (as shown in **Fig. 4d, e, 5d, 6c, 7a-d**)
+- compares the estimated parameters between samples with and without selection (as shown in **Fig. 5f-h**)
+- computes the cumulative age-incidence of CH driver acquisition (**Fig. 7e**)
