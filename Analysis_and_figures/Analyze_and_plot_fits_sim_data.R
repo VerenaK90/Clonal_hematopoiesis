@@ -470,18 +470,9 @@ for(cutoff in seq(1, 100, 1)){
 roc <- roc[order(roc$TP),]
 roc <- roc[order(roc$FP),]
 
-# plot TP against the cutoff
-p1 <- ggplot(roc[roc$size>=5,], aes(x=Cutoff, y=TP, col=size, group=size)) + geom_line() +
-  scale_color_gradientn(colors=hcl.colors(n = 7, palette="Zissou 1"), breaks=c(5, 10, 25, 50), trans="log10", limits=c(2.5, 100)) +  ggtitle("90x")+
-  geom_point(data=roc[roc$Cutoff==15 & roc$size>=5,], aes(x=Cutoff, y=TP), col="firebrick")
-
-# plot FP against the cutoff
-p2 <- ggplot(roc[roc$size>=5,], aes(x=Cutoff, y=FP, col=size, group=size)) +  geom_line() +
-  scale_color_gradientn(colors=hcl.colors(n = 7, palette="Zissou 1"), breaks=c(5, 10, 25, 50), trans="log10", limits=c(2.5, 100)) +  ggtitle("90x")+
-  geom_point(data=roc[roc$Cutoff==15 & roc$size>=5,], aes(x=Cutoff, y=FP), col="firebrick")
 
 # plot TP against FP
-p3 <- ggplot(roc, aes(x=FP, y=TP, col=size, group=size)) +  geom_line() +
+p <- ggplot(roc, aes(x=FP, y=TP, col=size, group=size)) +  geom_line() +
   scale_color_gradientn(colors=hcl.colors(n = 7, palette="Zissou 1"), breaks=c(5, 10, 25, 50), trans="log10", limits=c(2.5, 100)) +
   geom_abline(slope = 1, intercept = 0, linetype=2) + scale_x_continuous(limits=c(0,1)) + ggtitle("90x") +
   geom_point(data=roc[roc$Cutoff==15,], aes(x=FP, y=TP), col="firebrick")
@@ -489,24 +480,12 @@ p3 <- ggplot(roc, aes(x=FP, y=TP, col=size, group=size)) +  geom_line() +
 
 pdf(paste0(analysis.directory, "/Figures/Figure_2_a.pdf"), width=4, height = 3)
 
-print(p1)
-
-dev.off()
-
-pdf(paste0(analysis.directory, "/Figures/Figure_2_b.pdf"), width=4, height = 3)
-
-print(p2)
-
-dev.off()
-
-pdf(paste0(analysis.directory, "/Figures/Figure_2_c.pdf"), width=4, height = 3)
-
-print(p3)
+print(p)
 
 dev.off()
 
 ######################### ######################### ######################### ######################### #########################
-### Figure S1c, compute AUC; add point 1/1 to every combination
+### Figure 1c, compute AUC; add point 1/1 to every combination
 
 auc <- data.frame()
 
@@ -537,7 +516,7 @@ for(size in unique(roc.270$size)){
                           size = size, depth=270))
 }
 
-pdf(paste0(analysis.directory, "/Figures/Figure_S1_c.pdf"), width=4, height = 3)
+pdf(paste0(analysis.directory, "/Figures/Figure_1_c.pdf"), width=4, height = 3)
 
 ggplot(auc, aes(x=size, y=AUC, group=depth, linetype=as.character(depth))) + geom_line() + scale_x_log10(limits=c(1, 100)) +
   scale_y_continuous(limits = c(0.5,1)) + geom_vline(xintercept = 10, linetype=2)
@@ -545,7 +524,7 @@ ggplot(auc, aes(x=size, y=AUC, group=depth, linetype=as.character(depth))) + geo
 dev.off()
 
 ######################### ######################### ######################### ######################### #########################
-## Fig. 2d: apply the identified cutoffs to the simulated 90x data (minimal 5% VAF and 15% posterior probability)
+## Fig. 2b: apply the identified cutoffs to the simulated 90x data (minimal 5% VAF and 15% posterior probability)
 
 # collect highest density intervals of the parameters:
 # .. neutral fits only ..
@@ -653,7 +632,7 @@ to.plot$variable <- factor(to.plot$variable, levels=c("P_neutral", "P_selection"
 to.plot$Clone_size[to.plot$Clone_size==0] <- NA
 
 
-pdf(paste0(analysis.directory, "/Figures/Figure_2_d.pdf"), width=4, height = 3)
+pdf(paste0(analysis.directory, "/Figures/Figure_2_b.pdf"), width=4, height = 3)
 
 ## plot an exemplary selection
 

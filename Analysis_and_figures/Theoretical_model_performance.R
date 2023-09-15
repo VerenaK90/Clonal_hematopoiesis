@@ -35,7 +35,7 @@ dev.off()
 
 
 ####################################################################################################################
-## Fig. S1a and supplementary fig. 1: How does the model behave with varying N, while leaving N/lambda constant?
+## Supplementary fig. 1: How does the model behave with varying N, while leaving N/lambda constant?
 
 age <- 100 # evaluate at fixed age
 mu <- 1
@@ -60,7 +60,7 @@ for(Ntau in c(10^3, 10^4, 10^5)){
   }
 }
 
-pdf(paste0(analysis.directory, "/Figures/Figure_S1_supp_1.pdf"), width=9, height=9, useDingbats = F)
+pdf(paste0(analysis.directory, "/Figures/Supp_1.pdf"), width=9, height=9, useDingbats = F)
 
 ggplot(to.plot, aes(x=1/VAF, y=Number_of_Variants, col=log10(Stem_cell_count), group=Stem_cell_count)) +  geom_line() +
   scale_color_gradientn(colors=rev(hcl.colors(n = 7, palette="Zissou 1")), limits=c(3, 8))+

@@ -994,43 +994,7 @@ ggplot(to.plot[ to.plot$Tissue=="CD34" & to.plot$Parameter=="par_lambda_ss",],
 
 dev.off()
 
-####################################################################################################################################################
-## Figure 5i: compare the age of the selected clone among cases with known driver
 
-to.plot <- selected.parameters[selected.parameters$Parameter=="age_of_clone"& selected.parameters$Sample %in% clearly.selected.samples,]
-to.plot$CHIP.mutation <- sample.info[to.plot$Sample,]$CHIP.mutation.associated.with.fit
-to.plot$ID <- sample.info[to.plot$Sample,]$Paper_ID
-
-pdf(paste0(analysis.directory, "Figures/Figure_5i.pdf"), width=3.5, height=2.5)
-
-## subset on HSCs
-
-ggplot(to.plot[ to.plot$Tissue=="CD34",],
-       aes(x=ID, y=Median, ymin=lower, ymax=upper, col = CHIP.mutation)) +
-  geom_pointrange() + scale_color_manual(values=CHIP.color) +
-  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Age of clone (years)") +
-  expand_limits(x = 0, y = 0)
-
-dev.off()
-
-####################################################################################################################################################
-## Figure 5j: Compare the selective advantage between cases with and without known driver
-
-to.plot <- selected.parameters[selected.parameters$Parameter=="growth_per_year" & selected.parameters$Sample %in% clearly.selected.samples,]
-to.plot$CHIP.mutation <- sample.info[to.plot$Sample,]$CHIP.mutation.associated.with.fit
-to.plot$ID <- sample.info[to.plot$Sample,]$Paper_ID
-
-pdf(paste0(analysis.directory, "Figures/Figure_5j.pdf"), width=5, height=2.5)
-
-## subset on HSCs
-
-ggplot(to.plot[ to.plot$Tissue=="CD34",],
-       aes(x=ID, y=Median, ymin=lower, ymax=upper, col = CHIP.mutation)) +
-  geom_pointrange() + scale_color_manual(values=CHIP.color) +
-  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Growth per year (%)") +
-  expand_limits(x = 0, y = 0)
-
-dev.off()
 
 ####################################################################################################################################################
 ## Figure 6b, right panel: size of the selected clones
@@ -1131,26 +1095,21 @@ ggplot(to.plot[ to.plot$Tissue=="CD34",],
 dev.off()
 
 ####################################################################################################################################################
-## Figure 6d: age of the selected clone among cases with unknown driver
+## Figure 7a,b: age of the selected clone among cases with unknown driver
 
-to.plot <- selected.parameters[selected.parameters$Parameter=="age_of_clone"& selected.parameters$Sample %in% selection.no.driver,]
+to.plot <- selected.parameters[selected.parameters$Parameter=="age_of_clone"& selected.parameters$Sample %in% clearly.selected.samples,]
+to.plot$CHIP.mutation <- sample.info[to.plot$Sample,]$CHIP.mutation.associated.with.fit
 to.plot$ID <- sample.info[to.plot$Sample,]$Paper_ID
 
-pdf(paste0(analysis.directory, "Figures/Figure_6d.pdf"), width=5, height=2.5)
+pdf(paste0(analysis.directory, "Figures/Figure_7a_b.pdf"), width=5, height=2.5)
 
 ## subset on HSCs
 
 ggplot(to.plot[ to.plot$Tissue=="CD34",],
-       aes(x=ID, y=Median, ymin=lower, ymax=upper)) +
-  geom_pointrange() +
-  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Age of clone") +
+       aes(x=ID, y=Median, ymin=lower, ymax=upper, col = CHIP.mutation)) +
+  geom_pointrange() + scale_color_manual(values=CHIP.color) +
+  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Age of clone (years)") +
   expand_limits(x = 0, y = 0)
-
-## compare to cases with known driver:
-
-to.plot <- selected.parameters[selected.parameters$Parameter=="age_of_clone" & selected.parameters$Sample %in% c(selection.no.driver, clearly.selected.samples),]
-to.plot$CHIP.mutation <- sample.info[to.plot$Sample,]$CHIP.mutation.associated.with.fit
-to.plot$ID <- sample.info[to.plot$Sample,]$Paper_ID
 
 to.plot$CHIP.mutation <- factor(to.plot$CHIP.mutation, levels=c("ASXL1", "DNMT3A", "TET2", "unknown CHIP mutation"))
 
@@ -1160,31 +1119,24 @@ ggplot(to.plot[ to.plot$Tissue=="CD34",],
   theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Age of clone") +
   expand_limits(x = 0, y = 0)
 
-
 dev.off()
 
 ####################################################################################################################################################
-## Figure 6e: Compare the selective advantage between cases with and without known driver
-
-to.plot <- selected.parameters[selected.parameters$Parameter=="growth_per_year" & selected.parameters$Sample %in% selection.no.driver,]
-to.plot$CHIP.mutation <- sample.info[to.plot$Sample,]$CHIP.mutation.associated.with.fit
-to.plot$ID <- sample.info[to.plot$Sample,]$Paper_ID
-
-pdf(paste0(analysis.directory, "Figures/Figure_6e.pdf"), width=5, height=2.5)
-
-## subset on HSCs
-
-ggplot(to.plot[ to.plot$Tissue=="CD34",],
-       aes(x=ID, y=Median, ymin=lower, ymax=upper)) +
-  geom_pointrange() +
-  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Growth per year (%)") +
-  expand_limits(x = 0, y = 0)
-
-# compare to known drivers
+## Figure 7c,d: Compare the selective advantage between cases with and without known driver
 
 to.plot <- selected.parameters[selected.parameters$Parameter=="growth_per_year" & selected.parameters$Sample %in% c(selection.no.driver, clearly.selected.samples),]
 to.plot$CHIP.mutation <- sample.info[to.plot$Sample,]$CHIP.mutation.associated.with.fit
 to.plot$ID <- sample.info[to.plot$Sample,]$Paper_ID
+
+pdf(paste0(analysis.directory, "Figures/Figure_7c_d.pdf"), width=5, height=2.5)
+
+# subset on HSCs
+
+ggplot(to.plot[ to.plot$Tissue=="CD34",],
+       aes(x=ID, y=Median, ymin=lower, ymax=upper, col = CHIP.mutation)) +
+  geom_pointrange() + scale_color_manual(values=CHIP.color) +
+  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Growth per year (%)") +
+  expand_limits(x = 0, y = 0)
 
 to.plot$CHIP.mutation <- factor(to.plot$CHIP.mutation, levels=c("ASXL1", "DNMT3A", "TET2", "unknown CHIP mutation"))
 
@@ -1198,7 +1150,7 @@ ggplot(to.plot[ to.plot$Tissue=="CD34",],
 dev.off()
 
 ####################################################################################################################################################
-## Fig. 7: plot the incidence of CH driver acquisition
+## Fig. 7e: plot the incidence of CH driver acquisition
 
 to.plot <- selected.parameters[selected.parameters$Parameter=="par_t_s_absolute"&
                                  selected.parameters$Sample %in% c(selection.no.driver, clearly.selected.samples) &
@@ -1218,7 +1170,7 @@ to.plot <- data.frame(Age = seq(0, 100),
                       Upper = sapply(seq(0,100), function(a){sum(to.plot$lower/365<=a)})/nrow(to.plot))
 
 
-pdf(paste0(analysis.directory, "Figures/Figure_7.pdf"), width=5, height=2.5)
+pdf(paste0(analysis.directory, "Figures/Figure_7e.pdf"), width=5, height=2.5)
 
 ggplot(to.plot, aes(x=Age, y=Incidence, ymin=Lower, ymax=Upper)) + geom_ribbon(fill="grey", alpha=0.5) + geom_line() +
   geom_point(data=to.plot.driver, aes(x=Median/365, y=y, col=CHIP.mutation), inherit.aes = F) +
