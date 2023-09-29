@@ -6,8 +6,10 @@ source("./Settings.R")
 ####################################################################################################################
 ## Figure 1e: how does the VAF distribution change over time in the absence of selection, for different stem cell numbers and a constant division rate of 1/y?
 
+vafs.of.interest <- 10^seq(log10(0.01), 0, length.out=100) 
+
 ## set lambda and mu constant
-lambda = 1/365
+lambda = 5/365
 mu <- 10
 
 to.plot <- data.frame()
@@ -16,7 +18,7 @@ for(N in c(5*10^3, 5*10^4, 5*10^5)){
   for(age in seq(0, 100, 10)){ # simulate for varying agess
 
     to.plot <- rbind(to.plot,
-                     data.frame(VAF=seq(0.05, 1, 0.01), Number_of_Variants = sapply(2*seq(0.05, 1, 0.01), function(x){
+                     data.frame(VAF=vafs.of.interest, Number_of_Variants = sapply(2*vafs.of.interest, function(x){
                        mutational.burden(mu=mu, N=N, lambda.exp = 1, delta.exp = 0.2, lambda.ss = lambda, t.end = age*365, b = x*N)
                      }), Age = age, Stem_cell_count=N))
 
@@ -35,60 +37,76 @@ dev.off()
 
 
 ####################################################################################################################
-## Supplementary fig. 1: How does the model behave with varying N, while leaving N/lambda constant?
+## Supplementary fig. 1: How does the SFS of clones generated during homeostasis behave in the limit of long times?
 
-age <- 100 # evaluate at fixed age
-mu <- 1
+# exact and approximate analytical solutions for the SFS of variants generated during homeostasis:
+ana <- function(mu, lambda, t, f, N){
+  mu/f*(lambda*t/(1+lambda*t))^(f*N)
+}
+ana.approx <- function(mu, lambda, t, f, N){
+  mu/f*exp(-f*N/(lambda*t))
+}
+
+# exact and approximate solutions
 to.plot <- data.frame()
+# exact cumulative distribution
+to.plot.cum <- data.frame()
 
-for(Ntau in c(10^3, 10^4, 10^5)){
-  print(Ntau)
-  for(N in c(1000, 10000, 100000, 10^6)){
-    lambda <- N/Ntau
-    #  mu <- mu_per_year/lambda
-    to.plot <- rbind(to.plot,
-                     data.frame(VAF=seq(0.05, 1, 0.01), Number_of_Variants = sapply(2*seq(0.05, 1, 0.01), function(x){
-                       mutational.burden(mu=mu, N=N, lambda.exp = 1, delta.exp = 0.2, lambda.ss = lambda, t.end = age, b = x*N)
-                     }),  Stem_cell_count=N, Division_rate = lambda, Mutation_rate=mu, Ntau=Ntau, Phases = "both"),
-                     data.frame(VAF=seq(0.05, 1, 0.01), Number_of_Variants = sapply(2*seq(0.05, 1, 0.01), function(x){
-                       mutational.burden(mu=mu, N=N, lambda.exp = 1, delta.exp = 0.2, lambda.ss = lambda, t.end = age, b = x*N, phase="early")
-                     }),  Stem_cell_count=N, Division_rate = lambda, Mutation_rate=mu, Ntau=Ntau, Phases = "expansion"),
-                     data.frame(VAF=seq(0.05, 1, 0.01), Number_of_Variants = sapply(2*seq(0.05, 1, 0.01), function(x){
-                       mutational.burden(mu=mu, N=N, lambda.exp = 1, delta.exp = 0.2, lambda.ss = lambda, t.end = age, b = x*N, phase="homeostasis")
-                     }),  Stem_cell_count=N, Division_rate = lambda, Mutation_rate=mu, Ntau=Ntau, Phases = "homeostasis"))
+# model parameters
+N <- 10^3
+mu <- 1
+lambda <- 1
 
-  }
+for(t in c(2, 10, 100, 1000)){
+  to.plot <- rbind(to.plot, data.frame(time=t, S=ana(mu, lambda, t, vafs.of.interest, N),
+                                       f=vafs.of.interest, Method="Exact"))
+  to.plot <- rbind(to.plot, data.frame(time=t, S=ana.approx(mu, lambda, t, vafs.of.interest, N),
+                                       f=vafs.of.interest, Method="Approx"))
+  to.plot.cum <- rbind(to.plot.cum, data.frame(time=t, M=mutational.burden(mu, N, 1, 0, lambda, t, vafs.of.interest*N,
+                                                                           phase="homeostasis"),
+                                               VAF = vafs.of.interest))
 }
 
-pdf(paste0(analysis.directory, "/Figures/Supp_1.pdf"), width=9, height=9, useDingbats = F)
-
-ggplot(to.plot, aes(x=1/VAF, y=Number_of_Variants, col=log10(Stem_cell_count), group=Stem_cell_count)) +  geom_line() +
-  scale_color_gradientn(colors=rev(hcl.colors(n = 7, palette="Zissou 1")), limits=c(3, 8))+
-  scale_y_continuous(  name="Cumulative # of SSNVs") + facet_wrap(~Ntau*Phases, scales = "free_y") +
-  #scale_color_continuous(trans="log10")+
-  theme(aspect.ratio = 1, legend.position = "bottom")
-
-# normalize to 1
-to.plot.2 <- to.plot
-for(phase in unique(to.plot.2$Phases)){
-  for(ntau in unique(to.plot.2$Ntau)){
-    for(N in unique(to.plot.2[to.plot.2$Ntau==ntau,]$Stem_cell_count)){
-      to.plot.2[to.plot.2$Stem_cell_count==N & to.plot.2$Ntau==ntau & to.plot.2$Phases==phase,]$Number_of_Variants <- to.plot.2[to.plot.2$Stem_cell_count==N & to.plot.2$Ntau==ntau & to.plot.2$Phases==phase,]$Number_of_Variants/max(to.plot[to.plot$Stem_cell_count==N & to.plot$Ntau==ntau & to.plot$Phases=="both",]$Number_of_Variants)
-    }
-  }
+# same time, same N/lambda, varying N
+t <- 100
+Nlambda <- 10^4
+to.plot.3 <- data.frame()
+for(N in c(10^3, 10^4, 10^5, 10^6)){
+  lambda <- N/Nlambda
+  to.plot.3 <- rbind(to.plot.3, data.frame(VAF=vafs.of.interest,
+                                           M=mutational.burden(mu, N, 1, 0, lambda, t, vafs.of.interest*N),
+                                           N=N))
 }
 
-ggplot(to.plot.2, aes(x=1/VAF, y=Number_of_Variants, col=log10(Stem_cell_count), group=Stem_cell_count)) + geom_line() +
-  scale_color_gradientn(colors=rev(hcl.colors(n = 7, palette="Zissou 1")), limits=c(3, 8))+
-  scale_y_continuous(  name="Cumulative # of SSNVs") + facet_wrap(~Ntau*Phases, scales = "free") +
-  theme(aspect.ratio = 1, legend.position = "bottom")
+
+pdf(paste0(analysis.directory, "/Figures/Supp_1.pdf"), width=5, height=3.5)
+
+p1 <- ggplot(to.plot, aes(x=f, y=S, col=time, group=interaction(time,Method), linetype=Method)) + geom_line() + 
+  scale_x_log10(name="f") + scale_y_log10(limits=c(0.01, 500), name="S(f)") + 
+  scale_color_gradientn(colors=hcl.colors(n = 7, palette="Zissou1"), trans="log") +
+  geom_line(data = data.frame(f=vafs.of.interest, S=mu/vafs.of.interest), aes(x=f, y=S), inherit.aes=F,
+            col="black")
+
+p2 <- ggplot(to.plot.cum, aes(x=VAF, y=M, col=time, group=time)) + geom_line() + 
+  scale_x_log10(name="f") + scale_y_log10(limits=c(1, 10000), name="Cumulative number of variants") + 
+  scale_color_gradientn(colors=hcl.colors(n = 7, palette="Zissou1"), trans="log") +
+  geom_line(data = data.frame(f=vafs.of.interest, S=mu*N*log(1/vafs.of.interest)), aes(x=f, y=S), inherit.aes=F,
+            col="black")
+
+p3 <- ggplot(to.plot.3[to.plot.3$VAF==0.01,], aes(x=N, y=M, col=N, group=N)) + geom_point() + 
+  scale_x_log10(name="N") + scale_y_log10( name="Cumulative number of variants")+ 
+  scale_color_gradientn(colors=hcl.colors(n = 7, palette="Zissou1"), trans="log") 
+
+print(p1)
+print(p2)
+print(p3)
 
 dev.off()
+
 
 ##############################################################################################################################################
 ## Figure 1i: Predicted selection for varying t.s but at the same clone size
 
-vafs.of.interest <- seq(0.01, 1, 0.005)
 
 ## parameters
 lambda.exp <- 1
@@ -129,7 +147,6 @@ dev.off()
 ##############################################################################################################################################
 ## Figure 1j: predicted selection over time - 25,000 stem cells that divide 10 times per year. A selected clone is introduced at 20 years and grows with a selective advantage of 0.98
 
-vafs.of.interest <- seq(0.01, 1, 0.005)
 
 ## parameters
 lambda.exp <- 1
@@ -163,4 +180,5 @@ ggplot(simulated.burden.selection[simulated.burden.selection$VAF>=0.05,], aes(x=
   scale_y_continuous(name="Number of SSNVs")  + theme(aspect.ratio = 1)
 
 dev.off()
+
 
