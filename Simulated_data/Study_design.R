@@ -20,7 +20,7 @@ for(i in sample.info$SampleID){
   # transform them into simulated VAFs
   sim.vafs <- as.data.frame(t(sapply(true.vafs, function(x){
     cov <- rpois(1, depth)
-    vaf <- rbinom(1, depth, x)/cov
+    vaf <- rbinom(1, cov, x)/cov
     c(VAF=vaf, Depth=cov, varCounts = vaf*cov)
   })))
   snvs[[i]] <- sim.vafs[sim.vafs$VAF>0,]
@@ -40,7 +40,7 @@ for(i in sample.info$SampleID){
   true.vafs <- vafs[[as.character(sample.info[i,]$Age)]]
   sim.vafs <- as.data.frame(t(sapply(true.vafs, function(x){
     cov <- rpois(1, depth)
-    vaf <- rbinom(1, depth, x)/cov
+    vaf <- rbinom(1, cov, x)/cov
     c(VAF=vaf, Depth=cov, varCounts = vaf*cov)
   })))
   snvs[[i]] <- sim.vafs[sim.vafs$VAF>0,]
@@ -60,7 +60,7 @@ for(i in sample.info$SampleID){
   true.vafs <- vafs[[as.character(sample.info[i,]$Age)]]
   sim.vafs <- as.data.frame(t(sapply(true.vafs, function(x){
     cov <- rpois(1, depth)
-    vaf <- rbinom(1, depth, x)/cov
+    vaf <- rbinom(1, cov, x)/cov
     c(VAF=vaf, Depth=cov, varCounts = vaf*cov)
   })))
   snvs[[i]] <- sim.vafs[sim.vafs$VAF>0,]
