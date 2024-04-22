@@ -1,7 +1,7 @@
 #################################################################################################################################################
 ############ Simulate selected trees 
 
-library(FLORENCE)
+library(SCIFER)
 
 library(doParallel)
 library(foreach)
