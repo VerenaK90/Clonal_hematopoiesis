@@ -1,7 +1,7 @@
 #################################################################################################################################################
 ############ Simulate neutral trees 
 
-library(FLORENCE)
+library(SCIFER)
 library(doParallel)
 library(foreach)
 library(parallel)
