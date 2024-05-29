@@ -1,7 +1,9 @@
 #################################################################################################################################################
 ############ Simulate neutral trees 
 
-library(SCIFER)
+source("./Simulated_data/Simulate_trees.R")
+source("./Simulated_data/Post_processing.R")
+
 library(doParallel)
 library(foreach)
 library(parallel)
@@ -34,9 +36,6 @@ doParallel::registerDoParallel(cl = my.cluster)
 
 trees <- foreach(sim.nr = 1:10) %dopar% {
   set.seed(sim.nr*354)
-  print(sim.nr)
-  source("./Simulated_data/Simulate_trees.R")
-  
   gillespie.sim.s.p(parms.exp, parms.steady, time.max=75, time.samples=time.samples, N=N, NP=NP,
                     mut.rate = mut.rate, mutation.mode="Binomial", driver.mode = driver.mode, t.driver = t.driver, 
                     mut.rate.D = mut.rate.D, tau = N/100)
