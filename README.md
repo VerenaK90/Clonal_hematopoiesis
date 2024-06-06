@@ -110,7 +110,7 @@ The script [Pseudo_VAFs_Fabre_et_al.R](Data_preprocessing/Pseudo_VAFs_Fabre_et_a
 
 ### Parameter estimation
 
-As with the simulated data, we used SCIFER in conjunction with pyABC to estimate parameters. To re-run the analysis refer to the folder (Parameter_estimation) and modify Simulated_data/Run_model_scWGS.R according to the sample specification, with emphasis on the following information
+As with the simulated data, we used SCIFER in conjunction with pyABC to estimate parameters. To re-run the analysis refer to the folder (Parameter_estimation)[Parameter_estimation] and modify (Run_model_scWGS.R)[Run_model_scWGS.R] according to the sample specification, with emphasis on the following information
 
 - `patient.id`, the ID/name of the analyzed subject
 - `age`, the age (in days; can be retrieved from MetaData/Sample_info_published_data.xlsx)
