@@ -101,7 +101,7 @@ The script [Pseudo_VAFs_LeeSix_et_al.R](Data_preprocessing/Pseudo_VAFs_LeeSix_et
 
 Download the data from https://data.mendeley.com/datasets/np54zjkvxr/1 and structure them like: ./Published_data/Mitchell_et_al/*/.
 
-The script (Pseudo_VAFs_Mitchell_et_al.R)[Data_preprocessing/Pseudo_VAFs_Mitchell_et_al.R] generates the pseudo-bulk data and plots the VAF distributions as shown in **Fig. 3h, n, Extended Data Fig. 2e, f**. It also plots the trees as shown in **Fig. 3g, m**. Finally, it stores a list object containing the VAFs for each sample in (SNVs.RData)[RData/Mitchell_et_al/SNVs.RData]. Alternatively, this object can be directly downloaded from Mendeley.
+The script [Pseudo_VAFs_Mitchell_et_al.R](Data_preprocessing/Pseudo_VAFs_Mitchell_et_al.R) generates the pseudo-bulk data and plots the VAF distributions as shown in **Fig. 3h, n, Extended Data Fig. 2e, f**. It also plots the trees as shown in **Fig. 3g, m**. Finally, it stores a list object containing the VAFs for each sample in (SNVs.RData)[RData/Mitchell_et_al/SNVs.RData]. Alternatively, this object can be directly downloaded from Mendeley.
 
 #### Fabre et al.
 Download the data of id2259 from doi.org/10.6084/m9.figshare.15029118 and structure them like: ./Published_data/Fabre_et_al/*/.
@@ -110,7 +110,7 @@ The script [Pseudo_VAFs_Fabre_et_al.R](Data_preprocessing/Pseudo_VAFs_Fabre_et_a
 
 ### Parameter estimation
 
-As with the simulated data, we used SCIFER in conjunction with pyABC to estimate parameters. To re-run the analysis refer to the folder (Parameter_estimation)[Parameter_estimation] and modify (Run_model_scWGS.R)[Run_model_scWGS.R] according to the sample specification, with emphasis on the following information
+As with the simulated data, we used SCIFER in conjunction with pyABC to estimate parameters. To re-run the analysis refer to the folder [Parameter_estimation](Parameter_estimation) and modify [Run_model_scWGS.R](Run_model_scWGS.R) according to the sample specification, with emphasis on the following information
 
 - `patient.id`, the ID/name of the analyzed subject
 - `age`, the age (in days; can be retrieved from MetaData/Sample_info_published_data.xlsx)
