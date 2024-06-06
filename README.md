@@ -146,7 +146,7 @@ We ran the model on the filtered SNVs (called using Strelka and Mutect2, see man
 
 ### Parameter estimation
 
-As with the other data types, we used SCIFER in conjunction with pyABC to estimate parameters. To re-run the analysis refer to the folder (Parameter_estimation) and modify [Simulated_data/Run_model_WGS_data.R] according to the sample specification, with emphasis on the following information
+As with the other data types, we used SCIFER in conjunction with pyABC to estimate parameters. To re-run the analysis refer to the folder [Parameter_estimation](Parameter_estimation) and modify [Run_model_WGS_data.R](Simulated_data/Run_model_WGS_data.R) according to the sample specification, with emphasis on the following information
 
 - `patient.id`, the ID/name of the analyzed subject
 - `sort`, the cell sort to be analyzed ("CD34", "MNC", "MNC_minus_T" or "PB_gran")
