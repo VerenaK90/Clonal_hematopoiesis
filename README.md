@@ -144,7 +144,8 @@ This script
 
 We ran the model on the filtered SNVs (called using Strelka and Mutect2, see manuscript for details), which we stored, for convenience, in the list object (./RData/WGS/SNVs.RData). 
 
-### Parameter estimation (one-clone model)
+### Parameter estimation 
+#### One-clone model
 
 As with the other data types, we used SCIFER in conjunction with pyABC to estimate parameters. To re-run the analysis refer to the folder [Parameter_estimation](Parameter_estimation) and modify [Run_model_WGS_data.R](Simulated_data/Run_model_WGS_data.R) according to the sample specification, with emphasis on the following information
 
@@ -160,7 +161,9 @@ As with the other data types, we used SCIFER in conjunction with pyABC to estima
 
 The script Run_model_WGS.R is to be sourced by [ABC_fit.py](Parameter_estimation/ABC_fit.py). Hence, please also modify the paths in this file. The python script also contains the definition of the prior distributions. Note that we chose priors running between 0 and 0.99 for s and between 0 and 1 for t_s, but these values are relative values only that will be converted into absolute values by the model script [Bayesian_fit.R](Parameter_estimation/Bayesian_fit.R). Specifically, the minimal and maximal values of s and t_s are chosen such that the clone has a minimal size of `min.prior.size` and a maximal size of 1. Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to [Plot_fits_WGS_data.R](Analysis_and_figures/Plot_fits_WGS.R)).
 
-### Parameter estimation (two-clone model)
+To re-run the analysis for a model modification without size compensation for the selected clone (i.e., the overall stem cell pool expands according to the expansion of the selected clone) refer to the folder [Parameter_estimation](Parameter_estimation) and modify [Run_model_WGS_data_nsc.R](Simulated_data/Run_model_WGS_data_nsc.R) instead of [Run_model_WGS_data.R](Simulated_data/Run_model_WGS_data.R) and perform the model fits in analogy.
+
+#### Two-clone model
 
 In a second step, we used SCIFER in conjunction with pyABC to estimate parameters for a two-clone model. Here, we only used 270x WGS data from sorted CD34+ cells for parameter estimation. For each sample, two model fits were performed, assuming that the two clones originated via `branched` evolution vs `linear`evolution. To re-run the analysis refer to the folder [Parameter_estimation](Parameter_estimation) and modify [Run_model_WGS_data_2_branched_clones.R](Simulated_data/Run_model_WGS_data_2_branched_clones.R) and [Run_model_WGS_data_2_linear_clones.R](Simulated_data/Run_model_WGS_data_2_linear_clones.R) according to the sample specification, with emphasis on the following information
 
