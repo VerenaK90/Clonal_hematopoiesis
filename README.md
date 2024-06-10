@@ -144,31 +144,46 @@ This script
 
 We ran the model on the filtered SNVs (called using Strelka and Mutect2, see manuscript for details), which we stored, for convenience, in the list object (./RData/WGS/SNVs.RData). 
 
-### Parameter estimation
+### Parameter estimation (one-clone model)
 
 As with the other data types, we used SCIFER in conjunction with pyABC to estimate parameters. To re-run the analysis refer to the folder [Parameter_estimation](Parameter_estimation) and modify [Run_model_WGS_data.R](Simulated_data/Run_model_WGS_data.R) according to the sample specification, with emphasis on the following information
 
 - `patient.id`, the ID/name of the analyzed subject
-- `sort`, the cell sort to be analyzed ("CD34", "MNC", "MNC_minus_T" or "PB_gran")
+- `sort`, the cell sort to be analyzed ("CD34", "CD34_deep", "MNC", "MNC_minus_T" or "PB_gran")
 - `age`, the age (in days)
 - `snvs`, a named list containing a data frame with VAFs and depths for each individual, as provided in RData/WGS/SNVs.RData 
 - `depth`, the sequencing depth used to generate the data 
-- `min.vaf`, the smallest VAF in the data that is to be compared to the model. We used `min.vaf=0.05`, according to the detection limit of 90x WGS.
-- `min.clone.size`, the minimal clone size that can be detected by the model. We used `min.clone.size=0.05`, according to the detection limit of 90x WGS.
-- `min.prior.size`, the lower limit of clone sizes scanned by the parameter estimation. Parameter setzs associated with clones < min.clone.size will be evaluated with the neutral model. We used `min.prior.size=0.01`, according to the detection limit of 90x WGS.
+- `min.vaf`, the smallest VAF in the data that is to be compared to the model. We used `min.vaf=0.05` for 90x/120x WGS and `min.vaf=0.02`for 270x WGS, according to the respective detection limits.
+- `min.clone.size`, the minimal clone size that can be detected by the model. We used `min.clone.size=0.05` for 90x/120x WGS and `min.vaf=0.02` for 270x WGS, according to the respective detection limits.
+- `min.prior.size`, the lower limit of clone sizes scanned by the parameter estimation. Parameter setzs associated with clones < min.clone.size will be evaluated with the neutral model. We used `min.prior.size=0.01` for 90x/120x WGS and `min.prior.size=0.001` for 270x WGS, according to the respective detection limits.
 - `use.sensitivity` should sequencing sensitivity information be included in addition to binomial sampling? Defaults to F; if T, a matrix `false.negative.per.vaf` with columns corresponding to the measured VAFs and rows corresponding to individual measurements of the false negative rate at this VAF in addition to binomial noise must be provided. We used `use.sensitivity=F`.
 
 The script Run_model_WGS.R is to be sourced by [ABC_fit.py](Parameter_estimation/ABC_fit.py). Hence, please also modify the paths in this file. The python script also contains the definition of the prior distributions. Note that we chose priors running between 0 and 0.99 for s and between 0 and 1 for t_s, but these values are relative values only that will be converted into absolute values by the model script [Bayesian_fit.R](Parameter_estimation/Bayesian_fit.R). Specifically, the minimal and maximal values of s and t_s are chosen such that the clone has a minimal size of `min.prior.size` and a maximal size of 1. Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to [Plot_fits_WGS_data.R](Analysis_and_figures/Plot_fits_WGS.R)).
+
+### Parameter estimation (two-clone model)
+
+In a second step, we used SCIFER in conjunction with pyABC to estimate parameters for a two-clone model. Here, we only used 270x WGS data from sorted CD34+ cells for parameter estimation. For each sample, two model fits were performed, assuming that the two clones originated via `branched` evolution vs `linear`evolution. To re-run the analysis refer to the folder [Parameter_estimation](Parameter_estimation) and modify [Run_model_WGS_data_2_branched_clones.R](Simulated_data/Run_model_WGS_data_2_branched_clones.R) and [Run_model_WGS_data_2_linear_clones.R](Simulated_data/Run_model_WGS_data_2_linear_clones.R) according to the sample specification, with emphasis on the following information
+
+- `patient.id`, the ID/name of the analyzed subject
+- `age`, the age (in days)
+- `snvs`, a named list containing a data frame with VAFs and depths for each individual, as provided in RData/WGS/SNVs.RData 
+- `depth`, the sequencing depth used to generate the data 
+- `min.vaf`, the smallest VAF in the data that is to be compared to the model. We used `min.vaf=0.02`, according to the detection limit of 270x WGS.
+- `min.clone.size`, the minimal clone size that can be detected by the model. We used `min.clone.size=0.01`, according to the detection limit of 270x WGS.
+- `min.prior.size`, the lower limit of clone sizes scanned by the parameter estimation. Parameter setzs associated with clones < min.clone.size will be evaluated with the neutral model. We used `min.prior.size=0.001`, according to the detection limit of 270x WGS.
+- `use.sensitivity` should sequencing sensitivity information be included in addition to binomial sampling? Defaults to F; if T, a matrix `false.negative.per.vaf` with columns corresponding to the measured VAFs and rows corresponding to individual measurements of the false negative rate at this VAF in addition to binomial noise must be provided. We used `use.sensitivity=F`.
+
+The scripts Run_model_WGS_data_2_branched_clones.R and Run_model_WGS_data_2_linear_clones.R are to be sourced by [ABC_fit_branched.py](Parameter_estimation/ABC_fit_branched.py) and [ABC_fit_linear.py](Parameter_estimation/ABC_fit_linear.py), respectively. Hence, please also modify the paths in these files. The python scripts also contains the definition of the prior distributions. Note that for the 2-clone model, we parametrized the model with prior distributions on the 2 relative size variables `size1` and `size2`, informed by the results obtained with the one-clone model (see Supplementary Table 10 for details). The relative values will be converted into absolute values for `s1` and `s2` in the model script [Bayesian_fit_multiclone.R](Parameter_estimation/Bayesian_fit_multiclone.R) (see Methods for details). Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to [Plot_fits_WGS_data_2_clone_model.R](Analysis_and_figures/Plot_fits_WGS_2_clone_model.R)).
 
 ### Analysis and plots
 
 As with the pseudo-bulk data, extract .csv-files from the .db files using the function abc-export (or directly download them from Mendeley). The fits can then be inspected using the script [Plot_fits_WGS_data.R](Analysis_and_figures/Plot_fits_WGS_data.R).
 
-This script
-- plots data only for the neutral cases (**Fig. 4c**)
-- plots model vs data for each sample (as shown in **Figs. 4a, 5a, 6a, Extended Data Fig. 5**)
-- classifies individual cases as neutrally evolving or selected (as shown in **Figs. 4b, 5b, 6b, Supplementary Fig. 2**)
+This script sources the files [Plot_fits_WGS_data_2_clone_model.R](Analysis_and_figures/Plot_fits_WGS_2_clone_model.R) and [Plot_fits_WGS_data_no_size_compensation.R](Analysis_and_figures/Plot_fits_WGS_data_no_size_compensation.R) to integrate/compare model fits between different models. Moreover, it
+- plots data only for the neutral cases (**Fig. 4a**)
+- plots model vs data for each sample (as shown in **Figs. 4c, 5a, 6c,e,g, Extended Data Fig. 6, Extended Data Fig. 7a,b,d, Extended Data Fig. 8e,f**)
+- classifies individual cases as neutrally evolving or selected (as shown in **Figs. 4b, 5b, 6a,h, Supplementary Fig. 3**)
 - compares estimated clone sizes to VAFs of known drivers (**Fig. 5c**)
-- computes highest density estimates for the parameters (as shown in **Fig. 4d, e, 5d, 6c, 7a-d**)
+- computes highest density estimates for the parameters (as shown in **Fig. 4e, 5d, 6d, 7a-c, Extended Data Fig. 7e, Extended Data Fig. 8g, Extended Data Fig. 9**)
 - compares the estimated parameters between samples with and without selection (as shown in **Fig. 5f-h**)
-- computes the cumulative age-incidence of CH driver acquisition (**Fig. 7e**)
+- computes the cumulative age-incidence of CH driver acquisition (**Fig. 7d**)
