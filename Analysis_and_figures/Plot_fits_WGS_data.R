@@ -13,23 +13,11 @@ source("./Settings.R")
 ## mutation data
 load("RData/WGS_data/SNVs.RData")
 
-putative.drivers <- read.xlsx("MetaData/Supplementary Tables.xlsx", startRow = 8, sheet = 6)
+putative.drivers <- read.xlsx("MetaData/Supplementary Tables.xlsx", startRow = 8, sheet = 7)
 sample.info <- read.xlsx("MetaData/Supplementary Tables.xlsx", sheet = 2, startRow = 6)
 rownames(sample.info) <- sample.info$Paper_ID
 patient.ids <- sample.info$Paper_ID
-sample.info$CHIP.mutation.associated.with.fit <- sapply(sample.info$Paper_ID, function(x){
-  if(grepl("N", x)){
-    "no driver"
-  }else if(grepl("A", x)){
-    "ASXL1"
-  }else if(grepl("D", x)){
-    "DNMT3A"
-  }else if(grepl("T", x)){
-    "TET2"
-  }else if(grepl("U", x)){
-    "unknown driver"
-  }
-})
+
 
 ############################################################################################################################################
 ####### Set parameters as used for model fits
@@ -43,7 +31,7 @@ seq.type <- "bulk"
 # collect highest density intervals of the parameters:
 # .. overall ..
 parameters <- data.frame()
-# .. neutral fist only ..
+# .. neutral fits only ..
 neutral.parameters <- data.frame()
 # .. selection fits only
 selected.parameters <- data.frame()
@@ -58,24 +46,35 @@ for(patient.id in patient.ids){
   print(patient.id)
   age <- sample.info[patient.id, ]$Age*365
 
-  cell.sorts <- c("CD34", "MNC", "MNC_minus_T", "PB_gran")
+  cell.sorts <- c("CD34", "MNC", "MNC_minus_T", "PB_gran", "CD34_deep")
 
-  for(tissue in cell.sorts){
+  for(sort in cell.sorts){
 
+    min.vaf <- 0.05
+    min.clone.size <- 0.05
+    min.prior.size <- 0.01
+    
     # specify coverage and snvs of this sample
-    if(tissue == "CD34"){
-      depth <- sample.info[patient.id,]$`Coverage.WGS.CD34+`
+    if(sort == "CD34"){
+      depth <- sample.info[patient.id,]$`Coverage.WGS.CD34+.1`
       if(depth==0){next}
       snvs <- list(snvs.cd34[[patient.id]])
-    }else if(tissue == "MNC"){
+    }else if(sort == "MNC"){
       depth <- sample.info[patient.id,]$Coverage.WGS.BM.MNC
       if(depth==0){next}
       snvs <- list(snvs.mnc[[patient.id]])
-    }else if (tissue =="MNC_minus_T"){
+    }else if (sort =="MNC_minus_T"){
       depth <- sample.info[patient.id,]$`Coverage.WGS.BM.MNC–T`
       if(depth==0){next}
       snvs <- list(snvs.mnc_minus_t[[patient.id]])
-    }else {
+    }else if (sort == "CD34_deep"){
+      depth <- sample.info[patient.id,]$`Coverage.WGS.CD34+.1` + sample.info[patient.id,]$`Coverage.WGS.CD34+.2` 
+      if(depth==0){next}
+      snvs <- list(snvs.cd34.deep[[patient.id]])
+      min.vaf <- 0.02
+      min.clone.size <- 0.01
+      min.prior.size <- 0.001
+    }else{
       depth <- sample.info[patient.id,]$Coverage.WGS.PB.granulocytes
       if(depth==0){next}
       snvs <- list(snvs.pb_gran[[patient.id]])
@@ -84,35 +83,53 @@ for(patient.id in patient.ids){
     ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ######
     ###### load observed data
 
-    directory <- paste0(analysis.directory, "/Model_fits/WGS/", paste(patient.id, tissue, sep="_"))
+    directory <- paste0(analysis.directory, "/Model_fits/WGS/", paste(patient.id, sort, sep="_"))
     if(!file.exists(paste0(directory, "/Model_fit.csv"))){next}
     fits <- read.csv(paste0(directory, "/Model_fit.csv"))
 
-    if(tissue == "CD34"){
-      tissue.type = "CD34+"
-    }else if(tissue == "MNC_minus_T"){
-      tissue.type = "MNC_minus_T"
-    }else if(tissue=="MNC"){
-      tissue.type = "MNC"
-    }else if(tissue=="PB_gran"){
-      tissue.type="PB_gran"
+    if(sort == "CD34"){
+      sort.type = "CD34+"
+    }else if(sort == "MNC_minus_T"){
+      sort.type = "MNC_minus_T"
+    }else if(sort=="MNC"){
+      sort.type = "MNC"
+    }else if(sort=="PB_gran"){
+      sort.type="PB_gran"
+    }else if(sort=="CD34_deep"){
+      sort.type="CD34+_deep"
     }
 
     ## get the drivers associated with this case
-    driver.information <- putative.drivers[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
-                                              colnames(putative.drivers)[grep(tissue.type, colnames(putative.drivers))])]
+    driver.information <- putative.drivers[putative.drivers$mutation_in_any_control<=5,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
+                                                                                         colnames(putative.drivers)[grep(sort.type, colnames(putative.drivers))])]
+    if(sort.type=="CD34+"){
+      driver.information <- driver.information[,colnames(driver.information)[grep( "_CD38", colnames(driver.information), invert = T)]]
+      driver.information <- driver.information[,colnames(driver.information)[grep( "deep", colnames(driver.information), invert = T)]]
+    }else if(sort.type == "CD34+_deep"){
+      driver.information <- putative.drivers[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
+                                                colnames(putative.drivers)[grepl("CD34", colnames(putative.drivers)) &
+                                                                             grepl("deep", colnames(putative.drivers))])]
+      
+    }
     driver.information <- driver.information[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
-                                              colnames(driver.information)[grep(paste0(patient.id, "_"), colnames(driver.information))])]
-    driver.information$VAF <- Extract.info.from.vcf(driver.information, info="VAF", type="snvs", mutationcaller="mpileup", sample.col.mpileup = colnames(driver.information)[grep(paste0(patient.id, "_"), colnames(driver.information))])
-    driver.information$Depth <- Extract.info.from.vcf(driver.information, info="depth", type="snvs", mutationcaller="mpileup", sample.col.mpileup = colnames(driver.information)[grep(paste0(patient.id, "_"), colnames(driver.information))])
-    driver.information$nvar <- driver.information$VAF*driver.information$Depth
-    driver.information <- driver.information[driver.information$nvar>2,,drop=F]
-    driver.information$lower <- driver.information$VAF-1.96*sqrt(driver.information$VAF*(1-driver.information$VAF)/driver.information$Depth) ## Wald approximation for 95% binomial CI
-    driver.information$upper <- driver.information$VAF+1.96*sqrt(driver.information$VAF*(1-driver.information$VAF)/driver.information$Depth) ## Wald approximation for 95% binomial CI
-    driver.information$lower[driver.information$lower<0] <- 0
-    driver.information$upper[driver.information$upper>1] <- 1
-    ## subset on drivers in "TET2", "DNMT3A", "ASXL1" - the others are putative drivers with unknown consequences
-    driver.information <- driver.information[driver.information$GENE %in% c("DNMT3A", "TET2", "ASXL1"),]
+                                                colnames(driver.information)[grep(paste0(patient.id, "_"), colnames(driver.information))])]
+    if(any(grepl(paste0(patient.id, "_"), colnames(driver.information)))){
+      driver.information$VAF <- Extract.info.from.vcf(driver.information, info="VAF", type="snvs", mutationcaller="mpileup", sample.col.mpileup = colnames(driver.information)[grep(paste0(patient.id, "_"), colnames(driver.information))])
+      driver.information$Depth <- Extract.info.from.vcf(driver.information, info="depth", type="snvs", mutationcaller="mpileup", sample.col.mpileup = colnames(driver.information)[grep(paste0(patient.id, "_"), colnames(driver.information))])
+      driver.information$nvar <- driver.information$VAF*driver.information$Depth
+      driver.information <- driver.information[driver.information$nvar>2 &
+                                                 driver.information$Depth > 1/3*depth,,drop=F]
+      driver.information$lower <- driver.information$VAF-1.96*sqrt(driver.information$VAF*(1-driver.information$VAF)/driver.information$Depth) ## Wald approximation for 95% binomial CI
+      driver.information$upper <- driver.information$VAF+1.96*sqrt(driver.information$VAF*(1-driver.information$VAF)/driver.information$Depth) ## Wald approximation for 95% binomial CI
+      driver.information$lower[driver.information$lower<0] <- 0
+      driver.information$upper[driver.information$upper>1] <- 1
+    }else{
+      driver.information <- data.frame()
+    }
+
+    ## subset on drivers in "TET2", "DNMT3A", "ASXL1" and, in T2, KMT2D - the others are putative drivers with unknown consequences
+    driver.information <- driver.information[driver.information$GENE %in% c("DNMT3A", "TET2", "ASXL1") |
+                                               (driver.information$GENE == "KMT2D" & patient.id == "T2"),]
 
     ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ######
     #### Print parameter estimates
@@ -188,9 +205,10 @@ for(patient.id in patient.ids){
     hdinterval <- as.data.frame(t(hdi(fits, credMass=0.8)))
     hdinterval$Parameter <- rownames(hdinterval)
     hdinterval$Median <- apply(fits, 2, function(x){median(as.numeric(x))})
-    hdinterval$Sample <- patient.id
-    hdinterval$Tissue <- tissue
-
+    hdinterval$Paper_ID <- patient.id
+    hdinterval$Sort <- sort
+    hdinterval$Depth <- depth
+    
     ### 2D-correlations
 
     ## parameters to plot
@@ -310,13 +328,13 @@ for(patient.id in patient.ids){
 
 
     ## for selection associated values, store only the parameters associated with a clone >= 0.05
-    fits.selection <- fits[fits$size_of_clone >= 0.1, ]
-    fits.neutral <- fits[fits$size_of_clone < 0.1, ]
+    fits.selection <- fits[fits$size_of_clone >= 2*min.vaf, ]
+    fits.neutral <- fits[fits$size_of_clone < 2*min.vaf, ]
 
     if(nrow(fits.selection)>0){
-      model.support.selection[tissue, patient.id] <- nrow(fits.selection)/10
+      model.support.selection[sort, patient.id] <- nrow(fits.selection)/10
     }else{
-      model.support.selection[tissue,patient.id] <- 0
+      model.support.selection[sort,patient.id] <- 0
     }
 
     if(nrow(fits.selection)==0){
@@ -338,9 +356,10 @@ for(patient.id in patient.ids){
       hdinterval.selection <- as.data.frame(t(hdi(fits.selection, credMass=0.8)))
       hdinterval.selection$Parameter <- rownames(hdinterval.selection)
       hdinterval.selection$Median <- apply(fits.selection, 2, function(x){median(as.numeric(x))})
-      hdinterval.selection$Sample <- patient.id
-      hdinterval.selection$Tissue <- tissue
-
+      hdinterval.selection$Paper_ID <- patient.id
+      hdinterval.selection$Sort <- sort
+      hdinterval.selection$Depth <- depth
+      
       p <- ggplot(data=hdinterval, aes(x=Parameter, y = Median, ymin=lower, ymax=upper)) + geom_pointrange() +
         facet_wrap(~Parameter, scales="free")
 
@@ -354,9 +373,10 @@ for(patient.id in patient.ids){
         hdi.neutral <- as.data.frame(t(hdi(fits.neutral, credMass = 0.8)))
         hdi.neutral$Parameter <- rownames(hdi.neutral)
         hdi.neutral$Median <- apply(fits.neutral, 2, function(x){median(as.numeric(x))})
-        hdi.neutral$Sample <- patient.id
-        hdi.neutral$Tissue <- tissue
-
+        hdi.neutral$Paper_ID <- patient.id
+        hdi.neutral$Sort <- sort
+        hdi.neutral$Depth <- depth
+        
         neutral.parameters <- rbind(neutral.parameters, hdi.neutral[c("par_N", "par_delta_exp", "par_lambda_ss", "par_mu", "par_offset", "N_tau",
                                                                       "mutations_per_year"),])
 
@@ -410,7 +430,7 @@ for(patient.id in patient.ids){
     max.y <- max(to.plot$max.model)
 
     p <- ggplot(data=to.plot, aes(x=VAF, y=mean, ymin=mean-sd, ymax=mean+sd)) +
-      geom_ribbon(data=to.plot, aes(x=VAF, y=mean.bm, ymin=min.model,ymax=max.model), alpha=1, fill=model.colors["selection"]) + ggtitle(tissue.type)+
+      geom_ribbon(data=to.plot, aes(x=VAF, y=mean.bm, ymin=min.model,ymax=max.model), alpha=1, fill=model.colors["selection"]) + ggtitle(sort.type)+
       geom_pointrange(lwd=0.25, shape=1, fatten=1) + scale_y_continuous(name="Cumulative # of variants") +
       scale_x_continuous(limits=c(0, 0.6))
 
@@ -427,8 +447,8 @@ for(patient.id in patient.ids){
 
     p <- ggplot(data=to.plot, aes(x=1/VAF, y=mean, ymin=mean-sd, ymax=mean+sd)) +
       geom_ribbon(data=to.plot, aes(x=1/VAF, y=mean, ymin=min.model,ymax=max.model), alpha=1,
-                  fill=sample.color[tissue.type]) +
-      ggtitle(paste(sample.info[patient.id,]$Paper_ID, tissue.type))+
+                  fill=sample.color[sort.type]) +
+      ggtitle(paste(sample.info[patient.id,]$Paper_ID, sort.type))+
       geom_pointrange(lwd=0.25, shape=1, fatten=1) +
       scale_y_continuous(name="Cumulative # of mutations") + theme(aspect.ratio = 1) +
       scale_x_continuous(limits=xlimits, breaks = c(5, 10, 20), labels = c("0.2", "0.1", "0.05"), name = "Variant allele frequency") +
@@ -456,7 +476,7 @@ for(patient.id in patient.ids){
 
 
     print(p)
-    plotlist.model.vs.data[[paste(patient.id, tissue.type)]] <- p
+    plotlist.model.vs.data[[paste(patient.id, sort.type)]] <- p
 
     dev.off()
 
@@ -469,41 +489,60 @@ for(patient.id in patient.ids){
 ####################################################################################################################################################
 ## classify samples as selected or neutral according to CD34:
 
-clearly.neutral.samples <- intersect(normal.samples, colnames(model.support.selection)[model.support.selection["CD34",]<15])
-clearly.selected.samples <- setdiff(colnames(model.support.selection)[model.support.selection["CD34",]>=15],c(chip.samples.unknown.driver, normal.samples))
-selection.no.driver <-  intersect(c(chip.samples.unknown.driver, normal.samples), colnames(model.support.selection)[model.support.selection["CD34",]>=15])
+## 90x
+clearly.neutral.samples.90 <- intersect(normal.samples, colnames(model.support.selection)[model.support.selection["CD34",]<15])
+clearly.selected.samples.90 <- setdiff(colnames(model.support.selection)[model.support.selection["CD34",]>=15],c(chip.samples.unknown.driver, normal.samples))
+selection.no.driver.90 <-  intersect(c(chip.samples.unknown.driver, normal.samples), colnames(model.support.selection)[model.support.selection["CD34",]>=15])
+
+## 270x
+all.270x.samples <- colnames(model.support.selection)[!is.na(model.support.selection["CD34_deep",])]
+
+clearly.neutral.samples.270 <- intersect(normal.samples, colnames(model.support.selection)[model.support.selection["CD34_deep",]<15])
+clearly.selected.samples.270 <- setdiff(colnames(model.support.selection)[model.support.selection["CD34_deep",]>=15],c(chip.samples.unknown.driver, normal.samples))
+selection.no.driver.270 <-  intersect(c(chip.samples.unknown.driver, normal.samples), colnames(model.support.selection)[model.support.selection["CD34_deep",]>=15])
+
+
 ####################################################################################################################################################
-## Figures 4a/ 5a / 6a / S5, S7: plot the model fits stratified by type
+## Figures 4c/ 5a / 6c / S6, S7a/b: plot the model fits stratified by type
 
-# clearly neutral:
-pdf(paste0(analysis.directory, "/Figures/Figure_4a_S5.pdf"), width=8, height=8)
+# no known CH driver, 90x:
+pdf(paste0(analysis.directory, "/Figures/Figure_4c_S6a.pdf"), width=8, height=8)
 
-ggarrange(plotlist=plotlist.model.vs.data[names(plotlist.model.vs.data) %in%
-                                            paste(clearly.neutral.samples, "CD34+")],
+ggarrange(plotlist=plotlist.model.vs.data[paste(names(plotlist.model.vs.data)[
+  grepl("N", names(plotlist.model.vs.data)) | grepl("U", names(plotlist.model.vs.data))], "CD34+")],
           nrow=6, ncol=6)
 dev.off()
 
+# no known CH driver, 2700x:
+pdf(paste0(analysis.directory, "/Figures/Figure_6b.pdf"), width=8, height=8)
 
-# clearly selected:
-pdf(paste0(analysis.directory, "/Figures/Figure_5a_S7.pdf"), width=8, height=8)
+ggarrange(plotlist=plotlist.model.vs.data[paste(names(plotlist.model.vs.data)[
+  grepl("N", names(plotlist.model.vs.data)) | grepl("U", names(plotlist.model.vs.data))], "CD34+_deep")],
+  nrow=6, ncol=6)
+dev.off()
 
-ggarrange(plotlist=plotlist.model.vs.data[names(plotlist.model.vs.data) %in%
-                                            paste(clearly.selected.samples, "CD34+")],
-          nrow=6, ncol=6)
+
+# known CH driver, 90x:
+pdf(paste0(analysis.directory, "/Figures/Figure_5a_S7a.pdf"), width=8, height=8)
+
+ggarrange(plotlist=plotlist.model.vs.data[paste(names(plotlist.model.vs.data)[
+  !grepl("N", names(plotlist.model.vs.data)) & !grepl("U", names(plotlist.model.vs.data))], "CD34+")],
+  nrow=6, ncol=6)
 
 dev.off()
 
-# selection for an unknown driver
-pdf(paste0(analysis.directory, "/Figures/Figure_6_a.pdf"), width=8, height=8)
+# known CH driver, 270x
+pdf(paste0(analysis.directory, "/Figures/Figure_6c.pdf"), width=8, height=8)
 
-ggarrange(plotlist=plotlist.model.vs.data[names(plotlist.model.vs.data) %in%
-                                            paste(selection.no.driver, "CD34+")],
-          nrow=6, ncol=6)
+ggarrange(plotlist=plotlist.model.vs.data[paste(names(plotlist.model.vs.data)[
+  !grepl("N", names(plotlist.model.vs.data)) & !grepl("U", names(plotlist.model.vs.data))], "CD34+")],
+  nrow=6, ncol=6)
+
 dev.off()
 
-## for sample U5, plot a zoom in:
+## for sample U8, plot a zoom in:
 
-pdf(paste0(analysis.directory, "/Figures/Figure_6a_U5_zoom.pdf"), width=3.5, height=3.5)
+pdf(paste0(analysis.directory, "/Figures/Figure_6c_U8_zoom.pdf"), width=3.5, height=3.5)
 
 plotlist.model.vs.data$`U6 CD34` +
   scale_x_continuous( breaks = c(1/0.5, 1/0.4, 1/0.3, 1/0.2), labels = c("0.5", "0.4", "0.3", "0.2"), name="Variant allele frequency") +
@@ -514,77 +553,115 @@ dev.off()
 
 ## estimate time point of clone emergence: ~5-6 SSNVs
 
-n.div <- 6/selected.parameters[selected.parameters$Sample=="U6" & selected.parameters$Tissue=="CD34" &
+n.div <- 6/selected.parameters[selected.parameters$Paper_ID=="U6" & selected.parameters$Sort=="CD34" &
                                  selected.parameters$Parameter=="par_mu" ,c("lower", "Median", "upper")]
 
 
 ####################################################################################################################################################
-## Fig. 4b, 5b, 6b, Supplementary Figures 1, 3a: plot the posterior probability for the neutral and the selection model for each sample
+## Fig. 4b,d 5b, 6a, Supplementary Figures 3: plot the posterior probability for the neutral and the selection model for each sample
 
 to.plot <- melt(t(model.support.selection), value.name = "P_selection")
-colnames(to.plot)[c(1,2)] <- c("Patient", "Sample")
+colnames(to.plot)[c(1,2)] <- c("Patient", "Sort")
 to.plot$P_neutral <- 100 - to.plot$P_selection
 to.plot <- melt(to.plot, value.name = "Posterior probability")
-to.plot$Sample <- as.character(to.plot$Sample)
+to.plot$Sort <- as.character(to.plot$Sort)
 to.plot$Clone_size <- apply(to.plot, 1, function(x){
-  res <- selected.parameters[selected.parameters$Sample==x[1] & selected.parameters$Parameter=="size_of_clone" &
-                        selected.parameters$Tissue==x[2] & x[3]=="P_selection",]$Median
+  res <- selected.parameters[selected.parameters$Sort==x[1] & selected.parameters$Parameter=="size_of_clone" &
+                        selected.parameters$Sort==x[2] & x[3]=="P_selection",]$Median
   if(length(res)==0){
     return(0)}else{
       return(res)
     }
 })
 
-to.plot$Sample <- factor(to.plot$Sample, levels = c("CD34", "MNC_minus_T", "MNC", "PB_gran"))
+to.plot$Sort <- factor(to.plot$Sort, levels = c("CD34", "CD34_deep", "MNC_minus_T", "MNC", "PB_gran"))
 to.plot$variable <- factor(to.plot$variable, levels=c("P_neutral", "P_selection"))
 to.plot$Clone_size[to.plot$Clone_size==0] <- NA
 to.plot$ID <- sample.info[as.character(to.plot$Patient),]$Paper_ID
 to.plot$CHIP_driver <- sample.info[as.character(to.plot$Patient),]$CHIP.mutation.associated.with.fit
 
-## clearly neutral samples
+## samples w/o CH driver
 
-pdf(paste0(analysis.directory, "/Figures/Figures_4b.pdf"), width=6, height=6)
+pdf(paste0(analysis.directory, "/Figures/Figures_4b_d.pdf"), width=6, height=6)
 
-to.plot.neutral <- to.plot[to.plot$Sample=="CD34" & !is.na(to.plot$`Posterior probability`) & to.plot$Patient %in% clearly.neutral.samples,]
-to.plot.neutral$ID <- factor(to.plot.neutral$ID, levels=unique(to.plot.neutral$ID)[order(sapply(unique(to.plot.neutral$ID), function(x){
+## 90x
+to.plot.noCH <- to.plot[to.plot$Sort=="CD34" & !is.na(to.plot$`Posterior probability`) & 
+                          to.plot$ID %in% sample.info[sample.info$CH.driver.found == "no",]$Paper_ID,]
+to.plot.noCH$ID <- factor(to.plot.noCH$ID, levels=unique(to.plot.noCH$ID)[order(sapply(unique(to.plot.noCH$ID), function(x){
   sample.info[sample.info$Paper_ID==x,]$Age}))])
 
-ggplot(to.plot.neutral,
+ggplot(to.plot.noCH,
        aes(x=ID, y=`Posterior probability`, fill=Clone_size)) + geom_col(width=0.5, col="black") +
   scale_fill_gradientn(colors=hcl.colors(n = 7, palette="Zissou 1"), breaks=c(0.05, 0.10, 0.25, 0.50), trans="log10", limits=c(0.025, 1)) +
-  ggtitle("CD34 neutral")+ theme( strip.background = element_blank() )+ geom_hline(yintercept = 15, linetype=2)
+  ggtitle("CD34 no CH driver, 90x")+ theme( strip.background = element_blank() )+ geom_hline(yintercept = 15, linetype=2)
+
+## 270x
+to.plot.noCH <- to.plot[to.plot$Sort=="CD34_deep" & !is.na(to.plot$`Posterior probability`)  & 
+                          to.plot$ID %in% sample.info[sample.info$CH.driver.found == "no",]$Paper_ID,]
+to.plot.noCH$ID <- factor(to.plot.noCH$ID, levels=unique(to.plot.noCH$ID)[order(sapply(unique(to.plot.noCH$ID), function(x){
+  sample.info[sample.info$Paper_ID==x,]$Age}))])
+
+ggplot(to.plot.noCH,
+       aes(x=ID, y=`Posterior probability`, fill=Clone_size)) + geom_col(width=0.5, col="black") +
+  scale_fill_gradientn(colors=hcl.colors(n = 7, palette="Zissou 1"), breaks=c(0.05, 0.10, 0.25, 0.50), trans="log10", limits=c(0.025, 1)) +
+  ggtitle("CD34 no CH driver, 270x")+ theme( strip.background = element_blank() )+ geom_hline(yintercept = 15, linetype=2)
 
 dev.off()
 
-## clearly selected samples, associated with CH driver
+## samples with known CH driver
 
 pdf(paste0(analysis.directory, "/Figures/Figures_5b.pdf"), width=6, height=6)
 
-to.plot.selected <- to.plot[to.plot$Sample=="CD34" & !is.na(to.plot$`Posterior probability`) & to.plot$Patient %in% clearly.selected.samples,]
+# 90x
+to.plot.selected <- to.plot[to.plot$Sort=="CD34" & !is.na(to.plot$`Posterior probability`)  & 
+                              to.plot$ID %in% sample.info[!sample.info$CH.driver.found == "yes",]$Paper_ID,]
 ggplot(to.plot.selected,
        aes(x=ID, y=`Posterior probability`, fill=Clone_size)) + geom_col(width=0.5, col="black") +
   scale_fill_gradientn(colors=hcl.colors(n = 7, palette="Zissou 1"), breaks=c(0.05, 0.10, 0.25, 0.50), trans="log10", limits=c(0.025, 1)) +
-  ggtitle("CD34, selection associated with CH driver")+ theme( strip.background = element_blank() ) + geom_hline(yintercept = 15, linetype=2)
+  ggtitle("CD34, known CH driver, 90x")+ theme( strip.background = element_blank() ) + geom_hline(yintercept = 15, linetype=2)
 
-## neutral samples with evidence for selection
+# 270x
+to.plot.selected <- to.plot[to.plot$Sort=="CD34_deep" & !is.na(to.plot$`Posterior probability`)  & 
+                              to.plot$ID %in% sample.info[!sample.info$CH.driver.found == "yes",]$Paper_ID,]
 
-pdf(paste0(analysis.directory, "/Figures/Figures_6b_left.pdf"), width=6, height=6)
-
-ggplot(to.plot[to.plot$Sample=="CD34" & !is.na(to.plot$`Posterior probability`) & to.plot$Patient %in% selection.no.driver,],
+ggplot(to.plot.selected,
        aes(x=ID, y=`Posterior probability`, fill=Clone_size)) + geom_col(width=0.5, col="black") +
   scale_fill_gradientn(colors=hcl.colors(n = 7, palette="Zissou 1"), breaks=c(0.05, 0.10, 0.25, 0.50), trans="log10", limits=c(0.025, 1)) +
-  ggtitle("CD34 selection for an unkonwn driver")+ theme( strip.background = element_blank() ) + geom_hline(yintercept = 15, linetype=2)
+  ggtitle("CD34, known CH driver, 270x")+ theme( strip.background = element_blank() ) + geom_hline(yintercept = 15, linetype=2)
+
+dev.off()
+
+## samples with unknown CH driver
+
+pdf(paste0(analysis.directory, "/Figures/Figures_6bd.pdf"), width=6, height=6)
+
+# 90x
+to.plot.selected <- to.plot[to.plot$Sort=="CD34" & !is.na(to.plot$`Posterior probability`)  & 
+                              grepl("U", to.plot$ID),]
+ggplot(to.plot.selected,
+       aes(x=ID, y=`Posterior probability`, fill=Clone_size)) + geom_col(width=0.5, col="black") +
+  scale_fill_gradientn(colors=hcl.colors(n = 7, palette="Zissou 1"), breaks=c(0.05, 0.10, 0.25, 0.50), trans="log10", limits=c(0.025, 1)) +
+  ggtitle("CD34, unknown CH driver, 90x")+ theme( strip.background = element_blank() ) + geom_hline(yintercept = 15, linetype=2)
+
+# 270x
+to.plot.selected <- to.plot[to.plot$Sort=="CD34_deep" & !is.na(to.plot$`Posterior probability`)  & 
+                              grepl("U", to.plot$ID),]
+
+ggplot(to.plot.selected,
+       aes(x=ID, y=`Posterior probability`, fill=Clone_size)) + geom_col(width=0.5, col="black") +
+  scale_fill_gradientn(colors=hcl.colors(n = 7, palette="Zissou 1"), breaks=c(0.05, 0.10, 0.25, 0.50), trans="log10", limits=c(0.025, 1)) +
+  ggtitle("CD34, unknown CH driver, 270x")+ theme( strip.background = element_blank() ) + geom_hline(yintercept = 15, linetype=2)
 
 dev.off()
 
 
-## compare with other tissues
-pdf(paste0(analysis.directory, "/Figures/Supplementary_Figure_2.pdf"), width=6, height=6)
+## compare with other sorts
+pdf(paste0(analysis.directory, "/Figures/Supplementary_Figure_3.pdf"), width=6, height=6)
 
 to.plot <- to.plot[!is.na(to.plot$`Posterior probability`),]
-to.plot <- to.plot[to.plot$ID %in% names(table(to.plot$ID))[table(to.plot$ID)==2*4],] # select samples with all 4 tissues sequenced
+to.plot <- to.plot[to.plot$ID %in% names(table(to.plot$ID))[table(to.plot$ID)==2*4],] # select samples with all 4 sorts sequenced
 
-ggplot(to.plot, aes(x=Sample, y=`Posterior probability`, fill=Clone_size)) + geom_col(width=0.5, col=NA) +
+ggplot(to.plot, aes(x=Sort, y=`Posterior probability`, fill=Clone_size)) + geom_col(width=0.5, col=NA) +
   facet_rep_wrap(~ID) +   geom_hline(yintercept = 15, linetype=2)+
   scale_fill_gradientn(colors=hcl.colors(n = 7, palette="Zissou 1"), breaks=c(0.10, 0.25, 0.50), trans="log10", limits=c(0.025, 1)) +
   theme( strip.background = element_blank() )
@@ -595,10 +672,12 @@ dev.off()
 ####################################################################################################################################################
 ## Figure 4c: plot raw data w/o fits for normal blood
 
-to.plot <- data.frame(VAF= c(), MutationCount=c(), Sample=c(), Age=c())
+to.plot <- data.frame(VAF= c(), MutationCount=c(), Paper_ID=c(), Age=c(), Depth=c())
+
+## 90x
 vafs.of.interest <- seq(0.05, 1, 0.01)
 
-for(i in clearly.neutral.samples){
+for(i in sample.info[sample.info$CH.driver.found=="no",]$Paper_ID){
   tmp <- snvs.cd34[[i]][snvs.cd34[[i]]$varCounts >=3 & snvs.cd34[[i]]$Depth >=10 &
                           snvs.cd34[[i]]$Depth <=300,]
 
@@ -607,158 +686,182 @@ for(i in clearly.neutral.samples){
   })
 
   M <- M - min(M)
-  age <- sample.info[sample.info$SAMPLE==i,]$Age
+  age <- sample.info[sample.info$Paper_ID==i,]$Age
 
   to.plot <- rbind(to.plot, data.frame(VAF=vafs.of.interest,
                                        MutationCount=M,
-                                       Sample=i,
-                                       Age=age))
+                                       Paper_ID=i,
+                                       Age=age,
+                                       Depth=90))
 }
 
-pdf(paste0(analysis.directory, "/Figures/Figure_4c.pdf"), width=3.5, height=3.5)
+## 270x
+vafs.of.interest <- seq(0.02, 1, 0.01)
 
-ggplot(to.plot, aes(x=1/VAF, y=MutationCount, col=Age, group=Sample)) + geom_point() + geom_line() +
+for(i in sample.info$Paper_ID[sample.info$CH.driver.found=="no" &
+                            sample.info$`Coverage.WGS.CD34+.2`>0]){
+  tmp <- snvs.cd34.deep[[i]]
+  
+  M <- sapply(vafs.of.interest, function(x){
+    sum(tmp$VAF >=x)
+  })
+  
+  M <- M - min(M)
+  age <- sample.info[sample.info$Paper_ID==i,]$Age
+  
+  to.plot <- rbind(to.plot, data.frame(VAF=vafs.of.interest,
+                                       MutationCount=M,
+                                       Paper_ID=i,
+                                       Age=age,
+                                       Depth = 270))
+}
+
+
+
+pdf(paste0(analysis.directory, "/Figures/Figure_4a.pdf"), width=3.5, height=3.5)
+
+ggplot(to.plot[to.plot$Depth==90,], aes(x=1/VAF, y=MutationCount, col=Age, group=Paper_ID)) + geom_point() + geom_line() +
   scale_color_gradientn(colors=hcl.colors(n=7, palette="Zissou 1"), limits=c(25, 80)) +
   scale_x_continuous(breaks = c(5, 10, 20), labels = c("0.2", "0.1", "0.05"), name="Variant allele frequency") +
-  theme(aspect.ratio = 1)+ ggtitle("CD34")
+  theme(aspect.ratio = 1)+ ggtitle("CD34, 90x")
+
+ggplot(to.plot, aes(x=1/VAF, y=MutationCount, col=Age, group=paste(Paper_ID, Depth), 
+                    linetype = factor(Depth))) + geom_point() + geom_line() +
+  scale_color_gradientn(colors=hcl.colors(n=7, palette="Zissou 1"), limits=c(25, 80)) +
+  scale_x_continuous(breaks = c(1/0.2, 1/0.1, 1/0.05, 1/0.02), labels = c("0.2", "0.1", "0.05", "0.02"), name="Variant allele frequency") +
+  theme(aspect.ratio = 0.02/0.05)+ ggtitle("CD34, 90x and 270x")
+
 
 dev.off()
 
 ####################################################################################################################################################
-## Figure 4d, e: compare the physiological parameters in normal samples estimates across the cohort
+## Figure 4e: compare the physiological parameters in neutrally evolving samples estimates across the cohort
 
-pdf(paste0(analysis.directory, "/Figures/Figure_4d_e.pdf"), width=5, height=w)
+pdf(paste0(analysis.directory, "/Figures/Figure_4e.pdf"), width=5, height=w)
 
-## Stem cell number
-## CD34+
-to.plot <- melt(neutral.parameters[neutral.parameters$Parameter=="par_N" & neutral.parameters$Tissue=="CD34" ,],
-                id.vars = c("Sample", "lower", "upper", "Parameter", "Tissue"), value.name = "Median")
-to.plot <- to.plot[to.plot$Sample %in% clearly.neutral.samples,]
-to.plot$Patient.ID <- factor(sample.info[to.plot$Sample, ]$Paper_ID)
+molten.par <- reshape2::melt(neutral.parameters[((grepl("N", neutral.parameters$Paper_ID) & neutral.parameters$Depth %in% c(90, 120)) |
+                                                  (grepl("N", neutral.parameters$Paper_ID) & neutral.parameters$Depth %in% c(270, 300))) &
+                                                  grepl("CD34", neutral.parameters$Sort),],
+                             id.vars = c("Paper_ID", "lower", "upper", "Parameter", "Sort", "Depth"), value.name = "Median")
 
-## take medians of lower and upper quantiles as lower and upper bounds across the cohort
-to.plot.quantiles <- data.frame(min = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                        neutral.parameters$Parameter=="par_N" &
-                                                                        neutral.parameters$Tissue=="CD34",]$lower, p = 0.025), 2),
-                                max = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                        neutral.parameters$Parameter=="par_N"&
-                                                                        neutral.parameters$Tissue=="CD34",]$upper, p = 0.975), 2),
-                                x=c(0, sum( to.plot$Tissue=="CD34")))
+molten.par$Sort <- replace(molten.par$Sort, molten.par$Sort == "CD34_deep", "CD34")
+molten.par$Paper_ID <- factor(molten.par$Paper_ID,
+                                levels=unique(sample.info[molten.par$Paper_ID, ]$Paper_ID[order(sample.info[molten.par$Paper_ID, ]$Age)]))
+
+
+## stem cell number
+to.plot <- molten.par[molten.par$Parameter == "par_N",]
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==120, 90) # merge 90x and 120x
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==300, 270) # merge 270x and 300x
+## take 95% CI of lower and upper quantiles, measured with 90x, as lower and upper bounds across the cohort
+to.plot.quantiles <- data.frame(min = rep(quantile(molten.par[molten.par$Parameter=="par_N" & molten.par$Depth %in% c(90, 120),]$lower, p = 0.025), 2),
+                                max = rep(quantile(molten.par[molten.par$Parameter=="par_N" & molten.par$Depth %in% c(90, 120),]$upper, p = 0.975), 2),
+                                x=c(0, sum(molten.par$Parameter=="par_N"  & molten.par$Depth %in% c(90, 120))))
+
+to.plot$x <- as.numeric(factor(to.plot$Paper_ID, levels = sort(unique(to.plot$Paper_ID))))+0.2* 
+  as.numeric(factor(to.plot$Depth, levels = c(90, 270))) -1
 
 ggplot(to.plot,
-       aes(x=Patient.ID, y=Median, ymin=lower, ymax=upper)) + geom_pointrange() +
-  geom_ribbon(data=to.plot.quantiles, aes(ymin = min, ymax = max, x=x), inherit.aes = F, fill="grey", alpha = 0.7) +
-  geom_pointrange() + scale_color_manual(values=CHIP.color) +
-  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Stem cell number (log10)") +
-  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0)  + ggtitle("CD34")
+       aes(x=x, y=Median, ymin=lower, ymax=upper, linetype=factor(Depth))) + geom_pointrange(fatten = 0.5) +
+  geom_ribbon(data=to.plot.quantiles, aes(ymin = min, ymax = max, x=x-0.2), inherit.aes = F, fill="grey", alpha = 0.7) +
+  geom_pointrange(fatten = 1.5) + 
+  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Number of stem cells (log10)") +
+  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0) +
+  scale_x_continuous(breaks = unique(as.numeric(factor(to.plot$Paper_ID, levels = sort(unique(to.plot$Paper_ID))))+0.3 - 1),
+                     labels = sort(unique(to.plot$Paper_ID)), name = "")
 
 
-## Division rate
+## N x tau
+to.plot <- molten.par[molten.par$Parameter=="N_tau",]
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==120, 90) # merge 90x and 120x
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==300, 270) # merge 270x and 300x
+## take 95% CI of lower and upper quantiles, measured with 90x, as lower and upper bounds across the cohort
+to.plot.quantiles <- data.frame(min = rep(quantile(molten.par[molten.par$Parameter=="N_tau" & molten.par$Depth %in% c(90, 120),]$lower, p = 0.025), 2),
+                                max = rep(quantile(molten.par[molten.par$Parameter=="N_tau" & molten.par$Depth %in% c(90, 120),]$upper, p = 0.975), 2),
+                                x=c(0, sum( molten.par$Parameter=="N_tau" & molten.par$Depth %in% c(90, 120))))
 
-## CD34+
-to.plot <- melt(neutral.parameters[neutral.parameters$Parameter=="par_lambda_ss" & neutral.parameters$Tissue=="CD34",],
-                id.vars = c("Sample", "lower", "upper", "Parameter", "Tissue"), value.name = "Median")
-to.plot <- to.plot[to.plot$Sample %in% clearly.neutral.samples,]
-to.plot$Patient.ID <- factor(sample.info[to.plot$Sample, ]$Paper_ID)
+to.plot$x <- as.numeric(factor(to.plot$Paper_ID, levels = sort(unique(to.plot$Paper_ID))))+0.2* 
+  as.numeric(factor(to.plot$Depth, levels = c(90, 270))) -1
 
-## take medians of lower and upper quantiles as lower and upper bounds across the cohort
-to.plot.quantiles <- data.frame(min = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                        neutral.parameters$Parameter=="par_lambda_ss" &
-                                                                        neutral.parameters$Tissue=="CD34",]$lower, p = 0.025), 2),
-                                max = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                        neutral.parameters$Parameter=="par_lambda_ss"&
-                                                                        neutral.parameters$Tissue=="CD34",]$upper, p = 0.975), 2),
-                                x=c(0, sum( to.plot$Tissue=="CD34")))
+ggplot(to.plot,
+       aes(x=x, y=Median, ymin=lower, ymax=upper, linetype=factor(Depth))) + geom_pointrange(fatten = 0.5) +
+  geom_ribbon(data=to.plot.quantiles, aes(ymin = min, ymax = max, x=x-0.2), inherit.aes = F, fill="grey", alpha = 0.7) +
+  geom_pointrange(fatten = 1.5) + 
+  theme(axis.text.x=element_text(angle=90)) + scale_y_log10(name ="N x Tau", limits = c(1, 10^7)) +
+  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0) +
+  scale_x_continuous(breaks = unique(as.numeric(factor(to.plot$Paper_ID, levels = sort(unique(to.plot$Paper_ID))))+0.3 - 1),
+                     labels = sort(unique(to.plot$Paper_ID)), name = "")
 
-ggplot(to.plot[ to.plot$Tissue=="CD34",,drop=F],
-       aes(x=Patient.ID, y=365*10^Median, ymin=365*10^lower, ymax=365*10^upper)) + geom_pointrange() +
-  geom_ribbon(data=to.plot.quantiles, aes(ymin = 365*10^min, ymax = 365*10^max, x=x), inherit.aes = F, fill="grey", alpha = 0.7) +
-  geom_pointrange() + scale_color_manual(values=CHIP.color) +
-  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Division rate (1/y)") +
-  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0)  + ggtitle("CD34")
+### Division rate
+to.plot <- molten.par[molten.par$Parameter == "par_lambda_ss",]
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==120, 90) # merge 90x and 120x
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==300, 270) # merge 270x and 300x
+## take 95% CI of lower and upper quantiles, measured with 90x, as lower and upper bounds across the cohort
+to.plot.quantiles <- data.frame(min = rep(quantile(molten.par[molten.par$Parameter=="par_lambda_ss" & molten.par$Depth %in% c(90, 120),]$lower, p = 0.025), 2),
+                                max = rep(quantile(molten.par[molten.par$Parameter=="par_lambda_ss" & molten.par$Depth %in% c(90, 120),]$upper, p = 0.975), 2),
+                                x=c(0, sum(molten.par$Parameter=="par_lambda_ss" & molten.par$Depth %in% c(90, 120))))
 
+to.plot$x <- as.numeric(factor(to.plot$Paper_ID, levels = sort(unique(to.plot$Paper_ID))))+0.2* 
+  as.numeric(factor(to.plot$Depth, levels = c(90, 270))) -1
 
-## N times tau
-to.plot <- melt(neutral.parameters[neutral.parameters$Parameter=="N_tau" & neutral.parameters$Tissue=="CD34" ,],
-                id.vars = c("Sample", "lower", "upper", "Parameter", "Tissue"), value.name = "Median")
-to.plot <- to.plot[to.plot$Sample %in% clearly.neutral.samples,]
-to.plot$Patient.ID <- factor(sample.info[to.plot$Sample, ]$Paper_ID)
-
-## take medians of lower and upper quantiles as lower and upper bounds across the cohort
-to.plot.quantiles <- data.frame(min = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                        neutral.parameters$Parameter=="N_tau" &
-                                                                        neutral.parameters$Tissue=="CD34",]$lower, p = 0.025), 2),
-                                max = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                        neutral.parameters$Parameter=="N_tau"&
-                                                                        neutral.parameters$Tissue=="CD34",]$upper, p = 0.975), 2),
-                                x=c(0, sum( to.plot$Tissue=="CD34")))
-
-ggplot(to.plot[ to.plot$Tissue=="CD34",,drop=F],
-       aes(x=Patient.ID, y=Median, ymin=lower, ymax=upper)) + geom_pointrange() +
-  geom_ribbon(data=to.plot.quantiles, aes(ymin = min, ymax = max, x=x), inherit.aes = F, fill="grey", alpha = 0.7) +
-  geom_pointrange() + scale_color_manual(values=CHIP.color) +
-  theme(axis.text.x=element_text(angle=90)) + scale_y_log10(name ="N x Tau") +
-  theme(aspect.ratio = 1)+ expand_limits(y = 1)  + ggtitle("CD34")
+ggplot(to.plot,
+       aes(x=x, y=365*10^Median, ymin=365*10^lower, ymax=365*10^upper, linetype=factor(Depth))) + geom_pointrange(fatten = 0.5) +
+  geom_ribbon(data=to.plot.quantiles, aes(ymin = 365*10^min, ymax = 365*10^max, x=x-0.2), inherit.aes = F, fill="grey", alpha = 0.7) +
+  geom_pointrange(fatten = 1.5) + 
+  theme(axis.text.x=element_text(angle=90)) + scale_y_log10(name ="Division rate (1/y)") +
+  theme(aspect.ratio = 1)+ 
+  scale_x_continuous(breaks = unique(as.numeric(factor(to.plot$Paper_ID, levels = sort(unique(to.plot$Paper_ID))))+0.3 - 1),
+                     labels = sort(unique(to.plot$Paper_ID)), name = "")
 
 
-## Mutation rate
+### Mutation rate
+to.plot <- molten.par[molten.par$Parameter == "par_mu",]
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==120, 90) # merge 90x and 120x
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==300, 270) # merge 270x and 300x
+## take 95% CI of lower and upper quantiles, measured with 90x, as lower and upper bounds across the cohort
+to.plot.quantiles <- data.frame(min = rep(quantile(molten.par[molten.par$Parameter=="par_mu" & molten.par$Depth %in% c(90, 120),]$lower, p = 0.025), 2),
+                                max = rep(quantile(molten.par[molten.par$Parameter=="par_mu" & molten.par$Depth %in% c(90, 120),]$upper, p = 0.975), 2),
+                                x=c(0, sum( molten.par$Parameter=="par_mu" & molten.par$Depth %in% c(90, 120))))
 
-## CD34+
+to.plot$x <- as.numeric(factor(to.plot$Paper_ID, levels = sort(unique(to.plot$Paper_ID))))+0.2* 
+  as.numeric(factor(to.plot$Depth, levels = c(90, 270))) -1
 
-to.plot <- melt(neutral.parameters[neutral.parameters$Parameter=="par_mu" & neutral.parameters$Tissue=="CD34",],
-                id.vars = c("Sample", "lower", "upper", "Parameter", "Tissue"), value.name = "Median")
-to.plot <- to.plot[to.plot$Sample %in% clearly.neutral.samples,]
-to.plot$Patient.ID <- factor(sample.info[to.plot$Sample, ]$Paper_ID)
-
-## take medians of lower and upper quantiles as lower and upper bounds across the cohort
-to.plot.quantiles <- data.frame(min = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                        neutral.parameters$Parameter=="par_mu" &
-                                                                        neutral.parameters$Tissue=="CD34",]$lower, p = 0.025), 2),
-                              max = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                      neutral.parameters$Parameter=="par_mu"&
-                                                                      neutral.parameters$Tissue=="CD34",]$upper, p = 0.975), 2),
-                              x=c(0, sum( to.plot$Tissue=="CD34")))
-
-ggplot(to.plot[ to.plot$Tissue=="CD34",],
-       aes(x=Patient.ID, y=Median, ymin=lower, ymax=upper)) + geom_pointrange() +
-  geom_ribbon(data=to.plot.quantiles, aes(ymin = min, ymax = max, x=x), inherit.aes = F, fill="grey", alpha = 0.7) +
-  geom_pointrange() + scale_color_manual(values=CHIP.color) +
+ggplot(to.plot,
+       aes(x=x, y=Median, ymin=lower, ymax=upper, linetype=factor(Depth))) + geom_pointrange(fatten = 0.5) +
+  geom_ribbon(data=to.plot.quantiles, aes(ymin = min, ymax = max, x=x-0.2), inherit.aes = F, fill="grey", alpha = 0.7) +
+  geom_pointrange(fatten = 1.5) + 
   theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Number of SSNVs per division") +
-  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0)  + ggtitle("CD34")
-
+  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0) + 
+  scale_x_continuous(breaks = unique(as.numeric(factor(to.plot$Paper_ID, levels = sort(unique(to.plot$Paper_ID))))+0.3 - 1),
+                     labels = sort(unique(to.plot$Paper_ID)), name = "")
 
 dev.off()
-
 
 
 ####################################################################################################################################################
 ## Figure 5c: compare the estimated clone size with the driver VAF
 
-to.plot <- selected.parameters[selected.parameters$Parameter=="size_of_clone",]
+to.plot <- selected.parameters[selected.parameters$Parameter=="size_of_clone" &
+                                 selected.parameters$Sort == "CD34" & 
+                                 selected.paramters$Depth %in% c(90, 120),]
 to.plot$CHIP.mutation <- apply(to.plot, 1, function(x){
-  as.character(sample.info[as.character(x["Sample"]),"CHIP.mutation.associated.with.fit"])
+  as.character(sample.info[as.character(x["Paper_ID"]),"CHIP.mutation.associated.with.fit"])
 })
-to.plot <- to.plot[to.plot$CHIP.mutation!="no driver" & !is.na(to.plot$CHIP.mutation),]
+to.plot <- to.plot[to.plot$CHIP.mutation!="no selected clone" & !is.na(to.plot$CHIP.mutation),]
 
 # get ML estimate of the driver VAF and compute 95% CI based on Binomial distr.
 to.plot$Driver.mean <- apply(to.plot, 1, function(x){
-  if(x["Tissue"]=="CD34"){
-    type <- "CD34+"
-  }else if(x["Tissue"]=="MNC_minus_T"){
-    type <- "MNC_minus_T"
-  }else if(x["Tissue"]=="MNC"){
-    type <- "MNC"
-  }else if(x["Tissue"]=="PB_gran"){
-    type <- "PB_gran"
-  }
-
+  
+  type <- "CD34+"
+  
   driver.information <- putative.drivers[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
                                             colnames(putative.drivers)[grep(type, colnames(putative.drivers))])]
   driver.information <- driver.information[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
-                                              colnames(driver.information)[grep(paste0(x["Sample"], "_"), colnames(driver.information))])]
+                                              colnames(driver.information)[grep(paste0(x["Paper_ID"], "_"), colnames(driver.information))])]
   driver.information$VAF <- Extract.info.from.vcf(driver.information, info="VAF", mutationcaller = "mpileup", sample.col.mpileup = ncol(driver.information))
-  driver.information <- driver.information[driver.information$VAF>0 & driver.information$GENE==as.character(sample.info[as.character(x["Sample"]),"CHIP.mutation.associated.with.fit"]),,drop=F]
-
+  driver.information <- driver.information[driver.information$VAF>0 & driver.information$GENE==as.character(sample.info[as.character(x["Paper_ID"]),"CHIP.mutation.associated.with.fit"]),,drop=F]
+  
+  driver.information <- driver.information[driver.information$VAF < 0.9,]
   driver.information <- driver.information[which.max(driver.information$VAF),]
   vaf=as.numeric(driver.information["VAF"])
   if(is.na(vaf)){
@@ -767,27 +870,26 @@ to.plot$Driver.mean <- apply(to.plot, 1, function(x){
   return(vaf)
 })
 to.plot$Driver.min <- apply(to.plot, 1, function(x){
-  if(x["Tissue"]=="CD34"){
-    type <- "CD34+"
-  }else if(x["Tissue"]=="MNC_minus_T"){
-    type <- "MNC_minus_T"
-  }else if(x["Tissue"]=="MNC"){
-    type <- "MNC"
-  }else if(x["Tissue"]=="PB_gran"){
-    type <- "PB_gran"
-  }
+  
+  type <- "CD34+"
+  sample.col <- colnames(putative.drivers)[grepl(x["Paper_ID"], colnames(putative.drivers)) & 
+                                             grepl("CD34", colnames(putative.drivers)) &
+                                             !grepl("deep", colnames(putative.drivers))]
+  
+
   driver.information <- putative.drivers[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
                                             colnames(putative.drivers)[grep(type, colnames(putative.drivers))])]
   driver.information <- driver.information[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
-                                              colnames(driver.information)[grep(paste0(x["Sample"], "_"), colnames(driver.information))])]
-  driver.information$VAF <- Extract.info.from.vcf(driver.information, info="VAF", mutationcaller = "mpileup", sample.col.mpileup = ncol(driver.information))
-  driver.information$Depth <- Extract.info.from.vcf(driver.information, info="depth", mutationcaller = "mpileup", sample.col.mpileup = colnames(driver.information)[grep(paste0(x["Sample"], "_"), colnames(driver.information))])
-  driver.information <- driver.information[driver.information$VAF>0 & driver.information$GENE==as.character(sample.info[as.character(x["Sample"]),"CHIP.mutation.associated.with.fit"]),,drop=F]
-
+                                              colnames(driver.information)[grep(paste0(x["Paper_ID"], "_"), colnames(driver.information))])]
+  driver.information$VAF <- Extract.info.from.vcf(driver.information, info="VAF", mutationcaller = "mpileup", sample.col.mpileup = sample.col)
+  driver.information$Depth <- Extract.info.from.vcf(driver.information, info="depth", mutationcaller = "mpileup", sample.col.mpileup = sample.col)
+  driver.information <- driver.information[driver.information$VAF>0 & driver.information$GENE==as.character(sample.info[as.character(x["Paper_ID"]),"CHIP.mutation.associated.with.fit"]),,drop=F]
+  
+  driver.information <- driver.information[driver.information$VAF < 0.9,]
   driver.information <- driver.information[which.max(driver.information$VAF),]
   vaf=as.numeric(driver.information["VAF"])
   DP=as.numeric(driver.information["Depth"])
-
+  
   if(length(vaf)==0 || is.na(vaf)){
     vaf <- 0
     DP <- 0
@@ -796,27 +898,25 @@ to.plot$Driver.min <- apply(to.plot, 1, function(x){
   return(lower)
 })
 to.plot$Driver.max <- apply(to.plot, 1, function(x){
-  if(x["Tissue"]=="CD34"){
-    type <- "CD34+"
-  }else if(x["Tissue"]=="MNC_minus_T"){
-    type <- "MNC_minus_T"
-  }else if(x["Tissue"]=="MNC"){
-    type <- "MNC"
-  }else if(x["Tissue"]=="PB_gran"){
-    type <- "PB_gran"
-  }
+
+  type <- "CD34+"
+  sample.col <- colnames(putative.drivers)[grepl(x["Paper_ID"], colnames(putative.drivers)) & 
+                                             grepl("CD34", colnames(putative.drivers)) &
+                                             !grepl("deep", colnames(putative.drivers)) ]
+
   driver.information <- putative.drivers[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
                                             colnames(putative.drivers)[grep(type, colnames(putative.drivers))])]
   driver.information <- driver.information[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
-                                              colnames(driver.information)[grep(paste0(x["Sample"], "_"), colnames(driver.information))])]
-  driver.information$VAF <- Extract.info.from.vcf(driver.information, info="VAF", mutationcaller = "mpileup", sample.col.mpileup = ncol(driver.information))
-  driver.information$Depth <- Extract.info.from.vcf(driver.information, info="depth", mutationcaller = "mpileup", sample.col.mpileup = colnames(driver.information)[grep(paste0(x["Sample"], "_"), colnames(driver.information))])
-  driver.information <- driver.information[driver.information$VAF>0 & driver.information$GENE==as.character(sample.info[as.character(x["Sample"]),"CHIP.mutation.associated.with.fit"]),,drop=F]
-
+                                              colnames(driver.information)[grep(paste0(x["Paper_ID"], "_"), colnames(driver.information))])]
+  driver.information$VAF <- Extract.info.from.vcf(driver.information, info="VAF", mutationcaller = "mpileup", sample.col.mpileup = sample.col)
+  driver.information$Depth <- Extract.info.from.vcf(driver.information, info="depth", mutationcaller = "mpileup", sample.col.mpileup = sample.col)
+  driver.information <- driver.information[driver.information$VAF>0 & driver.information$GENE==as.character(sample.info[as.character(x["Paper_ID"]),"CHIP.mutation.associated.with.fit"]),,drop=F]
+  
+  driver.information <- driver.information[driver.information$VAF < 0.9,]
   driver.information <- driver.information[which.max(driver.information$VAF),]
   vaf=as.numeric(driver.information["VAF"])
   DP=as.numeric(driver.information["Depth"])
-
+  
   if(length(vaf)==0 || is.na(vaf)){
     vaf <- 0
     DP <- 0
@@ -827,11 +927,12 @@ to.plot$Driver.max <- apply(to.plot, 1, function(x){
 
 pdf(paste0(analysis.directory, "Figures/Figure_5c"), width=4, height = 4)
 
-ggplot(to.plot[to.plot$Driver.mean!=0 & to.plot$Sample %in% clearly.selected.samples,], aes(x=Median/2, xmin = lower/2, xmax = upper/2, color=CHIP.mutation,
+ggplot(to.plot[to.plot$Driver.mean!=0 & !grepl("N", to.plot$Paper_ID) &
+                 !grepl("U", to.plot$Paper_ID),], aes(x=Median/2, xmin = lower/2, xmax = upper/2, color=CHIP.mutation,
                                                                                             y=Driver.mean, ymin = Driver.min, ymax=Driver.max)) + geom_point() +
   geom_errorbar() + geom_errorbarh() + scale_color_manual(values=CHIP.color) +
-  geom_abline(slope = 1, intercept = 0, linetype=2) +
-  facet_wrap(~Tissue, nrow=2) + scale_x_continuous("VAF population genetics model") +
+  geom_abline(slope = 1, intercept = 0, linetype=2) + 
+  scale_x_continuous("VAF population genetics model") +
   scale_y_continuous("VAF WGS") + theme(aspect.ratio = 1)
 
 dev.off()
@@ -842,113 +943,108 @@ dev.off()
 
 pdf(paste0(analysis.directory, "/Figures/Figure_5_d_e.pdf"), width=5, height=3.5)
 
-## Stem cell number
+molten.par <- reshape2::melt(selected.parameters[((selected.parameters$Paper_ID %in% clearly.selected.samples.90 & selected.parameters$Depth %in% c(90, 120)) |
+                                                   (selected.parameters$Paper_ID %in% clearly.selected.samples.270 & selected.parameters$Depth %in% c(270, 300))) &
+                                                   grepl("CD34", selected.parameters$Sort),],
+                             id.vars = c("Paper_ID", "lower", "upper", "Parameter", "Sort", "Depth"), value.name = "Median")
+molten.par$CHIP.mutation <- sample.info[molten.par$Paper_ID,]$CHIP.mutation.associated.with.fit
+molten.par$CHIP.mutation <- factor(molten.par$CHIP.mutation, levels=c("ASXL1", "DNMT3A", "TET2", "unknown driver", "no selected clone"))
+molten.par$Sort <- replace(molten.par$Sort, molten.par$Sort == "CD34_deep", "CD34")
+molten.par$Paper_ID <- factor(sample.info[molten.par$Paper_ID, ]$Paper_ID,
+                                levels=unique(sample.info[molten.par$Paper_ID, ]$Paper_ID[order(sample.info[molten.par$Paper_ID, ]$Age)]))
 
-## selected clone
-to.plot <- selected.parameters[selected.parameters$Parameter=="par_N" & selected.parameters$Sample %in% clearly.selected.samples,]
-to.plot$CHIP.mutation <- sample.info[to.plot$Sample,]$CHIP.mutation.associated.with.fit
-to.plot$CHIP.mutation <- factor(to.plot$CHIP.mutation, levels=c("ASXL1", "DNMT3A", "TET2", "unknown driver", "no driver"))
-to.plot$ID <- sample.info[to.plot$Sample,]$Paper_ID
+## stem cell number
+to.plot <- molten.par[molten.par$Parameter == "par_N",]
 
-## neutral as reference, take medians of lower and upper quantiles as lower and upper bounds across the cohort
-to.plot.neutral <- data.frame(min = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                  neutral.parameters$Parameter=="par_N" &
-                                                                  neutral.parameters$Tissue=="CD34",]$lower, p = 0.025), 2),
-                              max = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                  neutral.parameters$Parameter=="par_N"&
-                                                                  neutral.parameters$Tissue=="CD34",]$upper, p = 0.975), 2),
-                              x=c(0, sum( to.plot$Tissue=="CD34")))
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==120, 90) # combine 90x and 120x
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==300, 270) # combine 270x and 300x
 
+## take 95% CI of lower and upper quantiles of the neutral cases as across the cohort for comparison
+to.plot.quantiles <- data.frame(min = rep(quantile(neutral.parameters[neutral.parameters$Parameter=="par_N" & neutral.parameters$Sort=="CD34" & neutral.parameters$Depth %in% c(90, 120) & grepl("N", neutral.parameters$Paper_ID),]$lower, p = 0.025), 2),
+                                max = rep(quantile(neutral.parameters[neutral.parameters$Parameter=="par_N" & neutral.parameters$Sort=="CD34" & neutral.parameters$Depth %in% c(90, 120) & grepl("N", neutral.parameters$Paper_ID),]$upper, p = 0.975), 2),
+                                x=c(0, sum( to.plot$Sort=="CD34" & to.plot$Parameter=="par_N"  & to.plot$Depth %in% c(90, 120))))
 
-## subset on HSCs
+to.plot$x <- as.numeric(factor(as.character(to.plot$Paper_ID), levels = sort(unique(as.character(to.plot$Paper_ID)))))+0.2* 
+  as.numeric(factor(to.plot$Depth, levels = c(90, 270))) -1
 
-ggplot(to.plot[ to.plot$Tissue=="CD34",],
-       aes(x=ID, y=Median, ymin=lower, ymax=upper, col=CHIP.mutation)) + geom_pointrange() +
-  geom_ribbon(data=to.plot.neutral, aes(ymin = min, ymax = max, x=x), inherit.aes = F, fill="grey", alpha = 0.7) +
-  geom_pointrange() + scale_color_manual(values=CHIP.color) +
-  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="N (log10)") +
-  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0) + facet_wrap(~CHIP.mutation=="unknown driver", scales = "free")
+ggplot(to.plot,
+       aes(x=x, y=Median, ymin=lower, ymax=upper, linetype=factor(Depth), col = CHIP.mutation)) + geom_pointrange(fatten = 0.5) +
+  geom_ribbon(data=to.plot.quantiles, aes(ymin = min, ymax = max, x=x-0.2), inherit.aes = F, fill="grey", alpha = 0.7) +
+  geom_pointrange(fatten = 1.5) + scale_color_manual(values=CHIP.color) +
+  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Number of stem cells (log10)") +
+  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0) +
+  scale_x_continuous(breaks = unique(as.numeric(factor(as.character(to.plot$Paper_ID), levels = sort(unique(as.character(to.plot$Paper_ID)))))+0.3 - 1),
+                     labels = sort(unique(to.plot$Paper_ID)), name = "")
+
 
 ## N x tau
 
-to.plot <- selected.parameters[selected.parameters$Parameter=="N_tau" & selected.parameters$Sample %in% clearly.selected.samples,]
-to.plot$CHIP.mutation <- sample.info[to.plot$Sample,]$CHIP.mutation
-to.plot$CHIP.mutation <- factor(to.plot$CHIP.mutation, levels=c("ASXL1", "DNMT3A", "TET2", "unknown CHIP mutation", "healthy donor"))
-to.plot$ID <- sample.info[to.plot$Sample,]$Paper_ID
+to.plot <- molten.par[molten.par$Parameter == "N_tau",]
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==120, 90) # combine 90x and 120x
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==300, 270) # combine 270x and 300x
 
-## neutral as reference, take medians of lower and upper quantiles as lower and upper bounds across the cohort
-to.plot.neutral <- data.frame(min = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                      neutral.parameters$Parameter=="N_tau" &
-                                                                      neutral.parameters$Tissue=="CD34",]$lower, p = 0.025), 2),
-                              max = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                      neutral.parameters$Parameter=="N_tau"&
-                                                                      neutral.parameters$Tissue=="CD34",]$upper, p = 0.975), 2),
-                              x=c(0, sum( to.plot$Tissue=="CD34")))
+## take 95% CI of lower and upper quantiles of the neutral cases as across the cohort for comparison
+to.plot.quantiles <- data.frame(min = rep(quantile(neutral.parameters[neutral.parameters$Parameter=="N_tau" & neutral.parameters$Sort=="CD34" & neutral.parameters$Depth %in% c(90, 120) & grepl("N", neutral.parameters$Paper_ID),]$lower, p = 0.025), 2),
+                                max = rep(quantile(neutral.parameters[neutral.parameters$Parameter=="N_tau" & neutral.parameters$Sort=="CD34" & neutral.parameters$Depth %in% c(90, 120) & grepl("N", neutral.parameters$Paper_ID),]$upper, p = 0.975), 2),
+                                x=c(0, sum(to.plot$Parameter=="N_tau"  & to.plot$Depth %in% c(90, 120))))
+
+to.plot$x <- as.numeric(factor(as.character(to.plot$Paper_ID), levels = sort(unique(as.character(to.plot$Paper_ID)))))+0.2* 
+  as.numeric(factor(to.plot$Depth, levels = c(90, 270))) -1
+
+ggplot(to.plot,
+       aes(x=x, y=Median, ymin=lower, ymax=upper, linetype=factor(Depth), col = CHIP.mutation)) + geom_pointrange(fatten = 0.5) +
+  geom_ribbon(data=to.plot.quantiles, aes(ymin = min, ymax = max, x=x-0.2), inherit.aes = F, fill="grey", alpha = 0.7) +
+  geom_pointrange(fatten = 1.5) + scale_color_manual(values=CHIP.color) +
+  theme(axis.text.x=element_text(angle=90)) + scale_y_log10(name ="N x Tau", limits = c(1, 10^8)) +
+  theme(aspect.ratio = 1)+ 
+  scale_x_continuous(breaks = unique(as.numeric(factor(as.character(to.plot$Paper_ID), levels = sort(unique(as.character(to.plot$Paper_ID)))))+0.3 - 1),
+                     labels = sort(unique(to.plot$Paper_ID)), name = "")
+
+# Division rate
+to.plot <- molten.par[molten.par$Parameter == "par_lambda_ss",]
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==120, 90) # combine 90x and 120x
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==300, 270) # combine 270x and 300x
+
+## take 95% CI of lower and upper quantiles of the neutral cases as across the cohort for comparison
+to.plot.quantiles <- data.frame(min = rep(quantile(neutral.parameters[neutral.parameters$Parameter=="par_lambda_ss" & neutral.parameters$Sort=="CD34" & neutral.parameters$Depth %in% c(90, 120) & grepl("N", neutral.parameters$Paper_ID),]$lower, p = 0.025), 2),
+                                max = rep(quantile(neutral.parameters[neutral.parameters$Parameter=="par_lambda_ss" & neutral.parameters$Sort=="CD34" & neutral.parameters$Depth %in% c(90, 120) & grepl("N", neutral.parameters$Paper_ID),]$upper, p = 0.975), 2),
+                                x=c(0, sum( to.plot$Parameter=="par_lambda_ss" & to.plot$Depth %in% c(90, 120))))
+
+to.plot$x <- as.numeric(factor(as.character(to.plot$Paper_ID), levels = sort(unique(as.character(to.plot$Paper_ID)))))+0.2* 
+  as.numeric(factor(to.plot$Depth, levels = c(90, 270))) -1
+
+ggplot(to.plot,
+       aes(x=x, y=365*10^Median, ymin=365*10^lower, ymax=365*10^upper, linetype=factor(Depth), col = CHIP.mutation)) + geom_pointrange(fatten = 0.5) +
+  geom_ribbon(data=to.plot.quantiles, aes(ymin = 365*10^min, ymax = 365*10^max, x=x-0.2), inherit.aes = F, fill="grey", alpha = 0.7) +
+  geom_pointrange(fatten = 1.5) + scale_color_manual(values=CHIP.color) +
+  theme(axis.text.x=element_text(angle=90)) + scale_y_log10(name ="Division rate (1/y)") +
+  theme(aspect.ratio = 1)+ 
+  scale_x_continuous(breaks = unique(as.numeric(factor(as.character(to.plot$Paper_ID), levels = sort(unique(as.character(to.plot$Paper_ID)))))+0.3 - 1),
+                     labels = sort(unique(to.plot$Paper_ID)), name = "")
 
 
-## subset on HSCs
+### Mutation rate
+to.plot <- molten.par[molten.par$Parameter == "par_mu",]
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==120, 90) # combine 90x and 120x
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==300, 270) # combine 270x and 300x
 
-ggplot(to.plot[ to.plot$Tissue=="CD34",],
-       aes(x=paste( as.numeric(CHIP.mutation), ID), y=Median, ymin=lower, ymax=upper, col=CHIP.mutation)) + geom_pointrange() +
-  geom_ribbon(data=to.plot.neutral, aes(ymin = min, ymax = max, x=x), inherit.aes = F, fill="grey", alpha = 0.7) +
-  geom_pointrange() + scale_color_manual(values=CHIP.color) +
-  theme(axis.text.x=element_text(angle=90)) + scale_y_log10(name ="N x Tau") +
-  theme(aspect.ratio = 1)+ expand_limits(y = 1)
+## take 95% CI of lower and upper quantiles of the neutral cases as across the cohort for comparison
 
-## Mutation rate
+to.plot.quantiles <- data.frame(min = rep(quantile(neutral.parameters[neutral.parameters$Parameter=="par_mu" & neutral.parameters$Sort=="CD34" & neutral.parameters$Depth %in% c(90, 120) & grepl("N", neutral.parameters$Paper_ID),]$lower, p = 0.025), 2),
+                                max = rep(quantile(neutral.parameters[neutral.parameters$Parameter=="par_mu" & neutral.parameters$Sort=="CD34" & neutral.parameters$Depth %in% c(90, 120) & grepl("N", neutral.parameters$Paper_ID),]$upper, p = 0.975), 2),
+                                x=c(0, sum(to.plot$Parameter=="par_mu" & to.plot$Depth %in% c(90, 120) )))
 
-## selected clone
-to.plot <- selected.parameters[selected.parameters$Parameter=="par_mu" & selected.parameters$Sample %in% clearly.selected.samples,]
-to.plot$CHIP.mutation <- sample.info[to.plot$Sample,]$CHIP.mutation.associated.with.fit
-to.plot$CHIP.mutation <- factor(to.plot$CHIP.mutation, levels=c("ASXL1", "DNMT3A", "TET2", "unknown driver", "no driver"))
-to.plot$ID <- sample.info[to.plot$Sample,]$Paper_ID
+to.plot$x <- as.numeric(factor(as.character(to.plot$Paper_ID), levels = sort(unique(as.character(to.plot$Paper_ID)))))+0.2* 
+  as.numeric(factor(to.plot$Depth, levels = c(90, 270))) -1
 
-## neutral as reference, take medians of lower and upper quantiles as lower and upper bounds across the cohort
-to.plot.neutral <- data.frame(min = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                      neutral.parameters$Parameter=="par_mu" &
-                                                                      neutral.parameters$Tissue=="CD34",]$lower, p = 0.025), 2),
-                              max = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                      neutral.parameters$Parameter=="par_mu"&
-                                                                      neutral.parameters$Tissue=="CD34",]$upper, p = 0.975), 2),
-                              x=c(0, sum( to.plot$Tissue=="CD34")))
-
-
-## subset on HSCs
-
-ggplot(to.plot[ to.plot$Tissue=="CD34",],
-       aes(x=ID, y=Median, ymin=lower, ymax=upper, col=CHIP.mutation)) + geom_pointrange() +
-  geom_ribbon(data=to.plot.neutral, aes(ymin = min, ymax = max, x=x), inherit.aes = F, fill="grey", alpha = 0.7) +
-  geom_pointrange() + scale_color_manual(values=CHIP.color) +
+ggplot(to.plot,
+       aes(x=x, y=Median, ymin=lower, ymax=upper, linetype=factor(Depth), col = CHIP.mutation)) + geom_pointrange(fatten = 0.5) +
+  geom_ribbon(data=to.plot.quantiles, aes(ymin = min, ymax = max, x=x-0.2), inherit.aes = F, fill="grey", alpha = 0.7) +
+  geom_pointrange(fatten = 1.5) + scale_color_manual(values=CHIP.color) +
   theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Number of SSNVs per division") +
-  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0) + facet_wrap(~CHIP.mutation=="unknown driver", scales = "free")
-
-
-## Division rate
-
-to.plot <- selected.parameters[selected.parameters$Parameter=="par_lambda_ss" & selected.parameters$Sample %in% clearly.selected.samples,]
-to.plot$CHIP.mutation <- sample.info[to.plot$Sample,]$CHIP.mutation.associated.with.fit
-to.plot$CHIP.mutation <- factor(to.plot$CHIP.mutation, levels=c("ASXL1", "DNMT3A", "TET2", "unknown driver", "no driver"))
-to.plot$ID <- sample.info[to.plot$Sample,]$Paper_ID
-
-## neutral as reference, take medians of lower and upper quantiles as lower and upper bounds across the cohort
-to.plot.neutral <- data.frame(min = rep(10^quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                      neutral.parameters$Parameter=="par_lambda_ss" &
-                                                                      neutral.parameters$Tissue=="CD34",]$lower, p = 0.025)*365, 2),
-                              max = rep(10^quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                      neutral.parameters$Parameter=="par_lambda_ss"&
-                                                                      neutral.parameters$Tissue=="CD34",]$upper, p = 0.975)*365, 2),
-                              x=c(0, sum( to.plot$Tissue=="CD34")))
-
-
-## subset on HSCs
-
-ggplot(to.plot[ to.plot$Tissue=="CD34",],
-       aes(x= ID, y=10^Median*365, ymin=10^lower*365, ymax=10^upper*365, col=CHIP.mutation)) + geom_pointrange() +
-  geom_ribbon(data=to.plot.neutral, aes(ymin = min, ymax = max, x=x), inherit.aes = F, fill="grey", alpha = 0.7) +
-  geom_pointrange() + scale_color_manual(values=CHIP.color) +
-  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Division rate (1/y)") +
-  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0) + facet_wrap(~CHIP.mutation=="unknown driver", scales = "free")
-
+  theme(aspect.ratio = 1)+ expand_limits(x= 0, y = 0)+
+  scale_x_continuous(breaks = unique(as.numeric(factor(as.character(to.plot$Paper_ID), levels = sort(unique(as.character(to.plot$Paper_ID)))))+0.3 - 1),
+                     labels = sort(unique(to.plot$Paper_ID)), name = "")
 
 dev.off()
 
@@ -956,225 +1052,641 @@ dev.off()
 ####################################################################################################################################################
 ## Fig. 5f-h: Compare physiological parameters between neutrally evolving cases and cases with selection
 
-to.plot <- neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples,]
-to.plot <- rbind(to.plot, selected.parameters[ selected.parameters$Sample %in% clearly.selected.samples,])
-to.plot$CHIP.mutation <- sample.info[to.plot$Sample,]$CHIP.mutation.associated.with.fit
-to.plot$ID <- sample.info[to.plot$Sample,]$Paper_ID
-to.plot$Age <- sample.info[to.plot$Sample,]$Age
-to.plot$Type <- ifelse(to.plot$Sample %in% clearly.neutral.samples, "Neutral", "Selection")
+# where available, use 270x estimates and else the 90x ones
+to.plot <- rbind(neutral.parameters[grepl("N", neutral.parameters$Paper_ID) & neutral.parameters$Depth %in% c(90, 120) &
+                                      sample.info[neutral.parameters$Paper_ID,]$`Coverage.WGS.CD34+.2`==0,],
+                 neutral.parameters[grepl("N", neutral.parameters$Paper_ID) & neutral.parameters$Depth %in% c(270, 300),])
+to.plot <- rbind(to.plot, selected.parameters[ !grepl("N", selected.parameters$Paper_ID) & !grepl("U", selected.parameters$Paper_ID) & selected.parameters$Depth %in% c(90, 120) &
+                                                 sample.info[neutral.parameters$Paper_ID,]$`Coverage.WGS.CD34+.2`==0,],
+                 selected.parameters[ !grepl("N", selected.parameters$Paper_ID) & !grepl("U", selected.parameters$Paper_ID) & selected.parameters$Depth %in% c(270, 300),])
+
+# subset on CD34
+to.plot <- to.plot[grepl("CD34", to.plot$Sort),]
+
+to.plot$CHIP.mutation <- sample.info[to.plot$Paper_ID,]$CHIP.mutation.associated.with.fit
+
+# annotate age of the individuals
+to.plot$Age <- sample.info[to.plot$Paper_ID,]$Age
+## make ages unique to facilitate visualization
+to.plot <- to.plot[order(to.plot$Age),]
+to.plot$Age <- unlist(sapply(unique(to.plot$Age), function(x){
+  tmp <- to.plot[to.plot$Age==x,]
+  for(i in unique(tmp$Paper_ID)){
+    tmp[tmp$Paper_ID==i,]$Age <- tmp[tmp$Paper_ID==i,]$Age + (which(unique(tmp$Paper_ID)==i)-1)/2
+  }
+  tmp$Age
+}))
+
+to.plot$Type <- ifelse(grepl("N", to.plot$Paper_ID), "N", "Selection")
+to.plot$Type <- factor(to.plot$Type, levels=c("Neutral", "Selection"))
+
 
 pdf(paste0(analysis.directory, "Figures/Figure_5_f_g_h.pdf"), width=5, height=2.5)
 
 ## Mutation rate
-ggplot(to.plot[ to.plot$Tissue=="CD34" & to.plot$Parameter=="par_mu",],
+ggplot(to.plot[to.plot$Parameter == "par_mu",],
        aes(x=Type, y=Median, ymin=lower, ymax=upper, col = Type)) + geom_boxplot(outlier.shape = NA) +
-  geom_pointrange(position = position_dodge2(width=0.5)) + scale_color_manual(values=c(Neutral="darkgrey", Selection="red")) +
+  geom_pointrange(position = position_dodge2(width=0.5)) + scale_color_manual(values=c(Neutral="darkgrey", Selection="red"))  +
   scale_y_continuous(name ="Number of SSNVs per division") +
-  expand_limits(y = 0)
+  expand_limits(y = 0) 
 
 ## Stem cell number
-ggplot(to.plot[ to.plot$Tissue=="CD34" & to.plot$Parameter=="par_N",],
+ggplot(to.plot[to.plot$Parameter == "par_N",],
        aes(x=Type, y=Median, ymin=lower, ymax=upper, col = Type)) + geom_boxplot(outlier.shape = NA) +
-  geom_pointrange(position = position_dodge2(width=0.5)) + scale_color_manual(values=c(Neutral="darkgrey", Selection="red")) +
+  geom_pointrange(position = position_dodge2(width=0.5)) + scale_color_manual(values=c(Neutral="darkgrey", Selection="red"))  +
   scale_y_continuous(name ="Stem cell number") +
   expand_limits(y = 0)
 
+
 ## Division rate
-ggplot(to.plot[ to.plot$Tissue=="CD34" & to.plot$Parameter=="par_lambda_ss",],
-       aes(x=Type, y=365*10^Median, ymin=365*10^lower, ymax=365*10^upper, col = Type)) + geom_boxplot(outlier.shape = NA) +
-  geom_pointrange(position = position_dodge2(width=0.5)) + scale_color_manual(values=c(Neutral="darkgrey", Selection="red")) +
-  scale_y_continuous(name ="Division rate (1/y)") +
-  expand_limits(y = 0)
-
-ggplot(to.plot[ to.plot$Tissue=="CD34" & to.plot$Parameter=="par_lambda_ss",],
+ggplot(to.plot[to.plot$Parameter=="par_lambda_ss",],
        aes(x=Age, y=365*10^Median, ymin=365*10^lower, ymax=365*10^upper, col = Type)) +
-  geom_point() + geom_errorbar() + scale_color_manual(values=c(Neutral="darkgrey", Selection="red")) +
-  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Division rate (1/y)") +
-  expand_limits(x = 0, y = 0)
+  geom_point() + geom_errorbar() + scale_color_manual(values=c(Neutral="darkgrey", Selection="red"))  +
+  theme(axis.text.x=element_text(angle=90)) + scale_y_log10(name ="Division rate (1/y)") +
+  expand_limits(x = 0) 
+
+ggplot(to.plot[to.plot$Parameter == "par_lambda_ss"],
+       aes(x=Type, y=365*10^Median, ymin=365*10^lower, ymax=365*10^upper, col = Type)) + geom_boxplot(outlier.shape = NA) +
+  geom_pointrange(position = position_dodge2(width=0.5)) + scale_color_manual(values=c(Neutral="darkgrey", Selection="red"))  +
+  scale_y_log10(name ="Division rate (1/y)") 
 
 dev.off()
 
 
+####################################################################################################################################################
+## Figure 6b, size of the selected clones in cases with unknown drivers
+
+molten.par <- reshape2::melt(selected.parameters[grepl("CD34", selected.parameters$Sort) & grepl("U", selected.parameters$Paper_ID) &
+                                                   ((selected.parameters$Paper_ID %in% selection.no.driver.90 & selected.parameters$Depth %in% c(90, 120)) |
+                                                   (selected.parameters$Paper_ID %in% selection.no.driver.270 & selected.parameters$Depth %in% c(270, 300))),],
+                             id.vars = c("Paper_ID", "lower", "upper", "Parameter", "Sort", "Depth"), value.name = "Median")
+molten.par$Paper_ID <- factor(molten.par$Paper_ID,
+                                levels=unique(molten.par$Paper_ID[order(sample.info[molten.par$Paper_ID, ]$Age)]))
+
+
+pdf(paste0(analysis.directory, "Figures/Figure_6b.pdf"), width=3.5, height=2.5)
+
+## Subset on the size of the clone
+to.plot <- molten.par[molten.par$Parameter == "size_of_clone",]
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==120, 90) # combine 90x and 120x
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==300, 270) # combine 270x and 300x
+
+to.plot$x <- as.numeric(factor(as.character(to.plot$Paper_ID), levels = sort(unique(as.character(to.plot$Paper_ID)))))+0.2* 
+  as.numeric(factor(to.plot$Depth, levels = c(90, 270))) -1
+
+ggplot(to.plot,
+       aes(x=x, y=Median, ymin=lower, ymax=upper, linetype=factor(Depth), col = factor(Depth))) + geom_pointrange(fatten = 1.5) +
+  geom_pointrange(fatten = 1.5) + scale_color_manual(values=c("90" = "black", "270" = "grey")) +
+  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Size of clone") +
+  theme(aspect.ratio = 1)+ expand_limits(x = 0, y =0) +
+  scale_x_continuous(breaks = unique(as.numeric(factor(as.character(to.plot$Paper_ID), levels = sort(unique(as.character(to.plot$Paper_ID)))))+0.3 - 1),
+                     labels = (unique(as.character(to.plot$Paper_ID))), name = "")
+
+dev.off()
 
 ####################################################################################################################################################
-## Figure 6b, right panel: size of the selected clones
+## Fig. 6d: Physiological parameters in selected cases
 
-pdf(paste0(analysis.directory, "Figures/Figure_6b_right.pdf"), width=3.5, height=2.5)
+molten.par <- reshape2::melt(rbind(selected.parameters[(grepl("CD34", selected.parameters$Sort) & selected.parameters$Paper_ID %in% selection.no.driver.90 & selected.parameters$Depth %in% c(90, 120)) |
+                                                         (grepl("CD34", selected.parameters$Sort) & selected.parameters$Paper_ID %in% selection.no.driver.270 & selected.parameters$Depth %in% c(270, 300)),],
+                                   neutral.parameters[grepl("CD34", neutral.parameters$Sort) & neutral.parameters$Paper_ID %in% setdiff(selection.no.driver.270, selection.no.driver.90) & neutral.parameters$Depth %in% c(90, 120),]),
+                             id.vars = c("Paper_ID", "lower", "upper", "Parameter", "Sort", "Depth"), value.name = "Median")
+molten.par$CHIP.mutation <- sample.info[molten.par$Paper_ID,]$CHIP.mutation.associated.with.fit
 
-to.plot <- selected.parameters[selected.parameters$Parameter=="size_of_clone" & selected.parameters$Sample %in% selection.no.driver,]
-to.plot$CHIP.mutation <- sample.info[to.plot$Sample,]$CHIP.mutation.associated.with.fit
-to.plot$ID <- sample.info[to.plot$Sample,]$Paper_ID
+molten.par$Sort <- replace(molten.par$Sort, molten.par$Sort == "CD34_deep", "CD34")
+molten.par$Paper_ID <- factor(molten.par$Paper_ID,
+                                levels=unique(molten.par$Paper_ID[order(sample.info[molten.par$Paper_ID, ]$Age)]))
 
-ggplot(to.plot[ to.plot$Tissue=="CD34",],
-       aes(x=ID, y=Median/2, ymin=lower/2, ymax=upper/2)) +
+
+pdf(paste0(analysis.directory, "/Figures/Figure_6_d.pdf"), width=3.5, height=3.5)
+
+## stem cell number
+to.plot <- molten.par[molten.par$Parameter == "par_N",]
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==120, 90) # combine 90x and 120x
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==300, 270) # combine 270x and 300x
+## take 95% CI of lower and upper quantiles of the neutrally evolving cases for comparison
+to.plot.quantiles <- data.frame(min = rep(quantile(neutral.parameters[neutral.parameters$Parameter=="par_N"& neutral.parameters$Sort=="CD34" & neutral.parameters$Depth %in% c(90, 120) & grepl("N", sample.info$Paper_ID),]$lower, p = 0.025), 2),
+                                max = rep(quantile(neutral.parameters[neutral.parameters$Parameter=="par_N"& neutral.parameters$Sort=="CD34" & neutral.parameters$Depth %in% c(90, 120) & grepl("N", sample.info$Paper_ID),]$upper, p = 0.975), 2),
+                                x=c(0, sum( to.plot$Parameter=="par_N" & to.plot$Depth %in% c(90, 120) & grepl("U", to.plot$Paper_ID))))
+
+to.plot$x <- as.numeric(factor(as.character(to.plot$Paper_ID), levels = sort(unique(as.character(to.plot$Paper_ID)))))+0.2* 
+  as.numeric(factor(to.plot$Depth, levels = c(90, 270))) -1
+
+ggplot(to.plot,
+       aes(x=x, y=Median, ymin=lower, ymax=upper, linetype=factor(Depth))) + geom_pointrange(fatten = 1.5) +
+  geom_ribbon(data=to.plot.quantiles, aes(ymin = min, ymax = max, x=x-0.2), inherit.aes = F, fill="grey", alpha = 0.7) +
+  geom_pointrange(fatten = 1.5) + scale_color_manual(values=CHIP.color) +
+  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Number of stem cells (log10)") +
+  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0) +
+  scale_x_continuous(breaks = unique(as.numeric(factor(as.character(to.plot$Paper_ID), levels = sort(unique(as.character(to.plot$Paper_ID)))))+0.3 - 1),
+                     labels = (unique(as.character(to.plot$Paper_ID))), name = "")
+
+
+### Division rate
+to.plot <- molten.par[molten.par$Parameter == "par_lambda_ss",]
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==120, 90) # combine 90x and 120x
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==300, 270) # combine 270x and 300x
+## take 95% CI of lower and upper quantiles of the neutrally evolving cases for comparison
+to.plot.quantiles <- data.frame(min = rep(quantile(neutral.parameters[neutral.parameters$Parameter=="par_lambda_ss"& neutral.parameters$Sort=="CD34" & neutral.parameters$Depth %in% c(90, 120) &  grepl("N", neutral.parameters$Paper_ID),]$lower, p = 0.025), 2),
+                                max = rep(quantile(neutral.parameters[neutral.parameters$Parameter=="par_lambda_ss"& neutral.parameters$Sort=="CD34" & neutral.parameters$Depth %in% c(90, 120) &  grepl("N", neutral.parameters$Paper_ID),]$upper, p = 0.975), 2),
+                                x=c(0, sum(  to.plot$Parameter=="par_lambda_ss" & to.plot$Depth %in% c(90, 120) & grepl("U", to.plot$Paper_ID))))
+
+to.plot$x <- as.numeric(factor(as.character(to.plot$Paper_ID), levels = sort(unique(as.character(to.plot$Paper_ID)))))+0.2* 
+  as.numeric(factor(to.plot$Depth, levels = c(90, 270))) -1
+
+ggplot(to.plot,
+       aes(x=x, y=365*10^Median, ymin=365*10^lower, ymax=365*10^upper, linetype=factor(Depth))) + geom_pointrange(fatten = 1.5) +
+  geom_ribbon(data=to.plot.quantiles, aes(ymin = 365*10^min, ymax = 365*10^max, x=x-0.2), inherit.aes = F, fill="grey", alpha = 0.7) +
+  geom_pointrange(fatten = 1.5) + scale_color_manual(values=CHIP.color) +
+  theme(axis.text.x=element_text(angle=90)) + scale_y_log10(name ="Division rate (1/y)") +
+  theme(aspect.ratio = 1)+ 
+  scale_x_continuous(breaks = unique(as.numeric(factor(as.character(to.plot$Paper_ID), levels = sort(unique(as.character(to.plot$Paper_ID)))))+0.3 - 1),
+                     labels = (unique(as.character(to.plot$Paper_ID))), name = "")
+
+### Mutation rate
+to.plot <- molten.par[molten.par$Parameter == "par_mu",]
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==120, 90) # combine 90x and 120x
+to.plot$Depth <- replace(to.plot$Depth, to.plot$Depth==300, 270) # combine 270x and 300x
+## take 95% CI of lower and upper quantiles of the neutrally evolving cases for comparison
+to.plot.quantiles <- data.frame(min = rep(quantile(neutral.parameters[neutral.parameters$Parameter=="par_mu"& neutral.parameters$Sort=="CD34" & neutral.parameters$Depth %in% c(90, 120) &  grepl("N", neutral.parameters$Paper_ID),]$lower, p = 0.025), 2),
+                                max = rep(quantile(neutral.parameters[neutral.parameters$Parameter=="par_mu"& neutral.parameters$Sort=="CD34" & neutral.parameters$Depth %in% c(90, 120) &  grepl("N", neutral.parameters$Paper_ID),]$upper, p = 0.975), 2),
+                                x=c(0, sum( to.plot$Sort=="CD34" & to.plot$Parameter=="par_mu" & to.plot$Depth %in% c(90, 120) & grepl("U", to.plot$Paper_ID) )))
+
+to.plot$x <- as.numeric(factor(as.character(to.plot$Paper_ID), levels = sort(unique(as.character(to.plot$Paper_ID)))))+0.2* 
+  as.numeric(factor(to.plot$Depth, levels = c(90, 270))) -1
+
+ggplot(to.plot,
+       aes(x=x, y=Median, ymin=lower, ymax=upper, linetype=factor(Depth))) + geom_pointrange(fatten = 1.5) +
+  geom_ribbon(data=to.plot.quantiles, aes(ymin = min, ymax = max, x=x-0.2), inherit.aes = F, fill="grey", alpha = 0.7) +
+  geom_pointrange(fatten = 1.5) + scale_color_manual(values=CHIP.color) +
+  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Number of SSNVs per division") +
+  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0) +
+  scale_x_continuous(breaks = unique(as.numeric(factor(as.character(to.plot$Paper_ID), levels = sort(unique(as.character(to.plot$Paper_ID)))))+0.3 - 1),
+                     labels = (unique(as.character(to.plot$Paper_ID))), name = "")
+
+
+dev.off()
+
+####################################################################################################################################################
+## In Figure 7, Extended Data Fig. 8g and Extended Data Fig.9, we show parameter estimates obtained with both the one-clone model (see code above)
+## and the 2-clone model. To load the parameters obtained with the 2-clone model, we source the file "Plot_fits_WGS_data_2_clone_model.R"
+
+source(paste0(custom.script.directory, "/Analysis_and_figures/Plot_fits_WGS_data_2_clone_model.R"))
+
+
+## cases with evidence for a second selected clone, parameters according to a two-clone model
+two.clone.model.parameters <- selected.parameters.2cm.2clones[paste(selected.parameters.2cm.2clones$Paper_ID, selected.parameters.2cm.2clones$Mode, sep="_") %in%
+                                                      colnames(model.support.selection.2_clones[,model.support.selection.2_clones["Clone 2",] > 15]),]
+two.clone.model.parameters$Subclones <- "2 clones"
+
+
+## cases with evidence for selection, parameters according to a one-clone model
+one.clone.model.parameters <- selected.parameters[!grepl("N", selected.parameters$Paper_ID) &
+                                              selected.parameters$Sort %in% c("CD34", "CD34_deep"),]
+one.clone.model.parameters$Subclones <- "1 clone"
+one.clone.model.parameters$Mode <- ""
+
+
+####################################################################################################################################################
+## Extended Data Fig. 8g, compare the physiological parameter estimates obtained with the 1-clone and the 2-clone model
+
+## Collect the physiological parameters for all cases in one data frame; for the 2 clone model take the average between linear and branched evolution, whenever both topologies suggested selection
+                                                                                                                                                                                   
+parameters.2clones <- two.clone.model.parameters[two.clone.model.parameters$Parameter %in% c("par_N", "par_lambda_ss", "par_mu"),intersect(colnames(two.clone.model.parameters),
+                                                                                                                                 colnames(one.clone.model.parameters))]
+parameters.1clone <- one.clone.model.parameters[one.clone.model.parameters$Paper_ID %in% two.clone.model.parameters$Paper_ID &
+                                                  one.clone.model.parameters$Parameter %in% c("par_N", "par_lambda_ss", "par_mu") &
+                                                  one.clone.model.parameters$Sort == "CD34_deep",intersect(colnames(two.clone.model.parameters),
+                                                                                                                                          colnames(one.clone.model.parameters))]
+
+## for plotting, average the two 2-clone topologies, in case both topologies fit the data
+
+to.plot <- data.frame()
+
+for(i in unique(parameters.2clones$Paper_ID)){
+  for(j in c("par_mu", "par_N", "par_lambda_ss")){
+    tmp.2clones <- parameters.2clones[parameters.2clones$Paper_ID == i &
+                                        grepl(j, parameters.2clones$Parameter),]
+    
+    tmp.1clone <- parameters.1clone[parameters.1clone$Paper_ID == i &
+                                      grepl(j, parameters.1clone$Parameter),]
+    
+    to.plot <- rbind(to.plot,
+                     data.frame(lower.1clone = mean(tmp.1clone$lower),
+                                upper.1clone = mean(tmp.1clone$upper),
+                                Parameter = j,
+                                Median.1clone = mean(tmp.1clone$Median),
+                                Paper_ID = i,
+                                Subclones = tmp.2clones$Subclones[1],
+                                lower.2clones = mean(tmp.2clones$lower),
+                                upper.2clones = mean(tmp.2clones$upper),
+                                Median.2clones = mean(tmp.2clones$Median)))
+    
+  }
+}
+
+rm(parameters.1clone)
+rm(parameters.2clones)
+
+pdf(paste0(analysis.directory, "/Figures/Figure_S8g.pdf"), width=3.5, height=2.5)
+
+## stem cell number
+ggplot(to.plot[to.plot$Parameter == "par_N",], 
+       aes(x = Median.1clone, xmin = lower.1clone, xmax = upper.1clone,
+           y = Median.2clones, ymin = lower.2clones, ymax = upper.2clones)) + geom_point() +
+  geom_errorbarh(height = 0) + geom_errorbar(width = 0) + theme(aspect.ratio = 1) +
+  scale_x_continuous("Stem cell number (1 clone; log10)") + scale_y_continuous("Stem cell number (2 clones; log10)") +
+  geom_abline(slope = 1, intercept = 0, linetype = 2) + expand_limits(x = 0, y = 0) 
+
+## division rate
+ggplot(to.plot[to.plot$Parameter == "par_lambda_ss",], 
+       aes(x = 365*10^Median.1clone, xmin = 365*10^lower.1clone, xmax = 365*10^upper.1clone,
+           y = 365*10^Median.2clones, ymin = 365*10^lower.2clones, ymax = 365*10^upper.2clones)) + geom_point() +
+  geom_errorbarh(height = 0) + geom_errorbar(width = 0) + theme(aspect.ratio = 1) +
+  scale_x_log10("Stem cell divisions per year (1 clone)") + scale_y_log10("Stem cell divisions per year (2 clones)") +
+  geom_abline(slope = 1, intercept = 0, linetype = 2) + expand_limits(x = 0, y = 0) 
+
+## mutation rate
+ggplot(to.plot[to.plot$Parameter == "par_mu",], 
+       aes(x = Median.1clone, xmin = lower.1clone, xmax = upper.1clone,
+           y = Median.2clones, ymin = lower.2clones, ymax = upper.2clones)) + geom_point() +
+  geom_errorbarh(height = 0) + geom_errorbar(width = 0) + theme(aspect.ratio = 1) +
+  scale_x_continuous("Number of SSNVs per division (1 clone)") + scale_y_continuous("Number of SSNVs per division (2 clones)") +
+  geom_abline(slope = 1, intercept = 0, linetype = 2) + expand_limits(x = 0, y = 0) 
+
+dev.off()
+
+####################################################################################################################################################
+## Extended Data Fig. 9a/c: compare age and growth rate of the leading (largest) selected clone between the one-clone model (90x/270x) and the 2-clone model (270x)
+
+parameters.2clones <- two.clone.model.parameters[two.clone.model.parameters$Parameter %in% c("age_of_clone_1", "growth_per_year1"),]
+
+## for plotting, average the two 2-clone topologies, in case both topologies fit the data
+
+to.plot <- data.frame()
+
+for(i in unique(parameters.2clones$Paper_ID)){
+  for(j in c("age_of_clone", "growth_per_year")){
+    tmp <- parameters.2clones[parameters.2clones$Paper_ID == i &
+                                grepl(j, parameters.2clones$Parameter),]
+    
+    if(nrow(tmp)==0){next}
+    to.plot <- rbind(to.plot,
+                     data.frame(lower = mean(tmp$lower),
+                                upper = mean(tmp$upper),
+                                Parameter = j,
+                                Median = mean(tmp$Median),
+                                Paper_ID = i,
+                                Subclones = tmp$Subclones[1]))
+    
+  }
+}
+
+to.plot$Depth <- 270
+
+rm(parameters.2clones)
+
+parameters.1clone <- one.clone.model.parameters[one.clone.model.parameters$Parameter %in% c("age_of_clone", "growth_per_year"),]
+
+parameters.1clone$Subclones <- "1 clone"
+
+to.plot <- rbind(to.plot, parameters.1clone[,colnames(to.plot)])
+
+rm(parameters.1clone)
+
+
+pdf(paste0(analysis.directory, "/Figures/Figure_S9ab.pdf"), width=5, height=2.5)
+
+to.plot$CHIP.mutation <- sample.info[to.plot$Paper_ID,]$CHIP.mutation.associated.with.fit
+to.plot$CHIP.mutation <- factor(to.plot$CHIP.mutation, levels=c("ASXL1", "DNMT3A", "TET2", "unknown driver", "no selected clone"))
+to.plot$CHIP.mutation.2 <- sample.info[to.plot$Paper_ID,]$CHIP.mutation.associated.with.fit.2
+to.plot$CHIP.mutation.2 <- factor(to.plot$CHIP.mutation.2, levels=c("ASXL1", "DNMT3A", "TET2", "unknown driver", "no selected clone"))
+
+## Age of leading clone 
+to.plot. <- to.plot[to.plot$Parameter == "age_of_clone",]
+to.plot.$Depth <- replace(to.plot.$Depth, to.plot.$Depth==120, 90) ## merge 90x and 120x
+to.plot.$Depth <- replace(to.plot.$Depth, to.plot.$Depth==300, 270) ## merge 270x and 300x
+to.plot.$x <- as.numeric(factor(to.plot.$Paper_ID, levels = sort(unique(to.plot.$Paper_ID))))+0.2* 
+  as.numeric(factor(to.plot.$Depth, levels = c(90, 270))) + 0.2*
+  as.numeric(factor(to.plot.$Subclones, levels = c("1 clone", "2 clones"))) -1 - 0.2
+to.plot.$Linetype <- factor(paste(to.plot.$Depth, to.plot.$Subclones), levels = c("90 1 clone", "270 1 clone", "270 2 clones"))
+
+ggplot(to.plot.,
+       aes(x=x, y=Median, ymin=lower, ymax=upper, col = CHIP.mutation, linetype = Linetype, shape = Linetype)) + 
+  geom_pointrange(fatten = 2) + scale_color_manual(values=CHIP.color) +
+  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Age of leading clone (years)") +
+  expand_limits(x = 0, y = 0) + theme(legend.position = "bottom") +
+  scale_x_continuous(breaks = unique(as.numeric(factor(to.plot.$Paper_ID, levels = sort(unique(to.plot.$Paper_ID))))+0.4 - 1),
+                     labels = (unique(to.plot.$Paper_ID)), name = "")
+
+
+## Clonal growth (leading clone)
+to.plot. <- to.plot[to.plot$Parameter == "growth_per_year",]
+to.plot.$Depth <- replace(to.plot.$Depth, to.plot.$Depth==120, 90) ## merge 90x and 120x
+to.plot.$Depth <- replace(to.plot.$Depth, to.plot.$Depth==300, 270) ## merge 270x and 300x
+to.plot.$x <- as.numeric(factor(to.plot.$Paper_ID, levels = sort(unique(to.plot.$Paper_ID))))+0.2* 
+  as.numeric(factor(to.plot.$Depth, levels = c(90, 270))) + 0.2*
+  as.numeric(factor(to.plot.$Subclones, levels = c("1 clone", "2 clones"))) -1 - 0.2
+to.plot.$Linetype <- factor(paste(to.plot.$Depth, to.plot.$Subclones), levels = c("90 1 clone", "270 1 clone", "270 2 clones"))
+
+ggplot(to.plot.,
+       aes(x=x, y=100*Median, ymin=100*lower, ymax=100*upper, col = CHIP.mutation,
+           linetype=Linetype, shape = Linetype)) +
+  geom_pointrange(fatten = 2) + scale_color_manual(values=CHIP.color) +
+  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Growth per year leading clone (%)") +
+  expand_limits(x = 0, y = 0) + theme(legend.position = "bottom") +
+  scale_x_continuous(breaks = unique(as.numeric(factor(to.plot.$Paper_ID, levels = sort(unique(to.plot.$Paper_ID))))+0.4 - 1),
+                     labels = (unique(to.plot.$Paper_ID)), name = "")
+
+dev.off()
+
+
+####################################################################################################################################################
+## Extended Data Fig. 9b/d: compare age and growth rate of the minor selected clone across the cohort
+
+selection.parameters.second.clone <- two.clone.model.parameters[two.clone.model.parameters$Parameter %in% c("growth_per_year2", "age_of_clone_2",),]
+
+## for plotting, average the two 2-clone topologies, in case both topologies fit the data
+
+to.plot <- data.frame()
+
+for(i in unique(selection.parameters.second.clone$Paper_ID)){
+  for(j in unique(selection.parameters.second.clone$Parameter)){
+    tmp <- selection.parameters.second.clone[selection.parameters.second.clone$Paper_ID == i &
+                                               selection.parameters.second.clone$Parameter == j,]
+    to.plot <- rbind(to.plot,
+                     data.frame(lower = mean(tmp$lower),
+                                upper = mean(tmp$upper),
+                                Parameter = j,
+                                Median = mean(tmp$Median),
+                                Paper_ID = i,
+                                Subclones = tmp$Subclones[1]))
+  }
+}
+
+
+pdf(paste0(analysis.directory, "/Figures/Figure_S9bd.pdf"), width=5, height=2)
+
+to.plot$CHIP.mutation <- sample.info[to.plot$Paper_ID,]$CHIP.mutation.associated.with.fit
+to.plot$CHIP.mutation <- factor(to.plot$CHIP.mutation, levels=c("ASXL1", "DNMT3A", "TET2", "unknown driver", "no selected clone"))
+to.plot$CHIP.mutation.2 <- sample.info[to.plot$Paper_ID,]$CHIP.mutation.associated.with.fit.2
+to.plot$CHIP.mutation.2 <- factor(to.plot$CHIP.mutation.2, levels=c("ASXL1", "DNMT3A", "TET2", "unknown driver", "no selected clone"))
+
+## Age of clone 2
+to.plot. <- to.plot[to.plot$Parameter %in% c("age_of_clone_2") & !is.na(to.plot$Median) ,]
+to.plot.$Paper_ID <- factor(to.plot.$Paper_ID, levels = sort(unique(as.character(to.plot.$Paper_ID))))
+
+ggplot(to.plot.,
+       aes(x=Paper_ID, y=Median, ymin=lower, ymax=upper, col = CHIP.mutation.2)) + geom_pointrange() +
   geom_pointrange() + scale_color_manual(values=CHIP.color) +
-  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Size of clone (VAF)") +
-  theme(aspect.ratio = 1) + expand_limits(y=0)
+  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Age of second clone (years)") +
+  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0) 
+
+
+## Clonal growth (clone 2)
+to.plot. <- to.plot[to.plot$Parameter %in% c("growth_per_year2") ,]
+to.plot.$Paper_ID <- factor(to.plot.$Paper_ID, levels = sort(unique(as.character(to.plot.$Paper_ID))))
+
+ggplot(to.plot.[!is.na(to.plot.$Median),],
+       aes(x=Paper_ID, y=100*Median, ymin=100*lower, ymax=100*upper, col = CHIP.mutation.2)) + geom_pointrange() +
+  geom_pointrange() + scale_color_manual(values=CHIP.color) +
+  theme(axis.text.x=element_text(angle=90)) + scale_y_log10(name ="Clonal growth per year (2nd clone) (%)") +
+  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0) 
 
 dev.off()
 
-####################################################################################################################################################
-## Fig. 6c: Physiological parameters in selected cases
 
-pdf(paste0(analysis.directory, "/Figures/Figure_6_c.pdf"), width=3.5, height=3.5)
+####################################################################################################################################################
+## Figure 7a-c compare age and growth across the cohort; combining estimates from one- and two-clone model:
+## where there is evidence for a second selected clone, use the estimates from the 2-clone model
+## where there is evidence for only 1 selected clone but 270x WGS data available, use the estimates from the 1-clone model on 270x data
+## where there is evidence for only 1 selected clone and no 270x WGS data available, use the estimates from the 1-clone model on 90x data
+
+selection.parameters.combined <- rbind(two.clone.model.parameters[two.clone.model.parameters$Parameter %in% c("growth_per_year1", "growth_per_year2",
+                                                                                                     "age_of_clone_1", "age_of_clone_2"),intersect(colnames(two.clone.model.parameters),
+                                                                                                                                                              colnames(one.clone.model.parameters))],
+                                          one.clone.model.parameters[!one.clone.model.parameters$Paper_ID %in% two.clone.model.parameters &
+                                                                       one.clone.model.parameters$Sort == "CD34_deep" & 
+                                            one.clone.model.parameters$Parameter %in% c("growth_per_year", "age_of_clone"),intersect(colnames(two.clone.model.parameters),colnames(one.clone.model.parameters))],
+                                          one.clone.model.parameters[!one.clone.model.parameters$Paper_ID %in% two.clone.model.parameters &
+                                                                       sample.info[one.clone.model.parameters$Paper_ID,]$`Coverage.WGS.CD34+.2`==0 &
+                                                                       one.clone.model.parameters$Sort == "CD34" & 
+                                                                       one.clone.model.parameters$Parameter %in% c("growth_per_year", "age_of_clone"),intersect(colnames(two.clone.model.parameters),colnames(one.clone.model.parameters))])
+
+## for plotting, average the two 2-clone topologies, in case both topologies fit the data
+
+to.plot <- data.frame()
+
+for(i in unique(selection.parameters.combined$Paper_ID)){
+  for(j in unique(selection.parameters.combined$Parameter)){
+    tmp <- selection.parameters.combined[selection.parameters.combined$Paper_ID == i &
+                                           selection.parameters.combined$Parameter == j,]
+    to.plot <- rbind(to.plot,
+                     data.frame(lower = mean(tmp$lower),
+                                upper = mean(tmp$upper),
+                                Parameter = j,
+                                Median = mean(tmp$Median),
+                                Paper_ID = i,
+                                Subclones = tmp$Subclones[1]))
+  }
+}
+
+pdf(paste0(analysis.directory, "/Figures/Figure_7abc.pdf"), width=5, height=2)
+
+to.plot$CHIP.mutation <- sample.info[to.plot$Paper_ID,]$CHIP.mutation.associated.with.fit
+to.plot$CHIP.mutation <- factor(to.plot$CHIP.mutation, levels=c("ASXL1", "DNMT3A", "TET2", "unknown driver", "no selected clone"))
+to.plot$CHIP.mutation.2 <- sample.info[to.plot$Paper_ID,]$CHIP.mutation.associated.with.fit.2
+to.plot$CHIP.mutation.2 <- factor(to.plot$CHIP.mutation.2, levels=c("ASXL1", "DNMT3A", "TET2", "unknown driver", "no selected clone"))
+
+## Age of leading clone 
+to.plot. <- to.plot[to.plot$Parameter %in% c("age_of_clone_1", "age_of_clone") ,]
+
+## summarize by driver
+ggplot(to.plot.,
+       aes(x=CHIP.mutation, y=Median, ymin=lower, ymax=upper, col = CHIP.mutation)) + geom_boxplot(outliers = F) +
+  geom_pointrange(position = position_jitter(width = 0.25)) + scale_color_manual(values=CHIP.color) +
+  theme(axis.text.x=element_text(angle=30)) + scale_y_continuous(name ="Age of first clone (years)") +
+  expand_limits(x = 0, y = 0) 
+
+## Age of minor clone
+to.plot. <- to.plot[to.plot$Parameter %in% c("age_of_clone_2") & !is.na(to.plot$Median) ,]
+
+## summarize by driver
+ggplot(to.plot.,
+       aes(x=CHIP.mutation.2, y=Median, ymin=lower, ymax=upper, col = CHIP.mutation.2)) + geom_boxplot(outliers = F) +
+  geom_pointrange(position = position_jitter(width = 0.25)) + scale_color_manual(values=CHIP.color) +
+  theme(axis.text.x=element_text(angle=30)) + scale_y_continuous(name ="Age of second clone (years)") +
+  expand_limits(x = 0, y = 0) 
+
+## Clonal growth (both clones)
+to.plot. <- to.plot[to.plot$Parameter %in% c("growth_per_year1", "growth_per_year", "growth_per_year2") ,]
+to.plot.$Paper_ID <- factor(to.plot.$Paper_ID, levels = sort(unique(as.character(to.plot.$Paper_ID))))
+to.plot.$CHIP.mutation.this.clone <- ifelse(to.plot.$Parameter %in% c("growth_per_year", "growth_per_year1"), 
+                                            as.character(to.plot.$CHIP.mutation), as.character(to.plot.$CHIP.mutation.2))
+
+## summarize by driver
+ggplot(to.plot.[!is.na(to.plot.$Median),],
+       aes(x=CHIP.mutation.this.clone, y=100*Median, ymin=100*lower, ymax=100*upper, col = CHIP.mutation.this.clone)) + geom_boxplot(outliers = F) +
+  geom_pointrange(position = position_jitter(width = 0.25)) + scale_color_manual(values=CHIP.color) +
+  theme(axis.text.x=element_text(angle=30)) + scale_y_log10(name ="Clonal growth per year (both clones) (%)") +
+  expand_limits(x = 0, y = 0) 
+
+dev.off()
+
+
+
+####################################################################################################################################################
+## Fig. 7d: plot the incidence of CH driver acquisition
+## where there is evidence for a second selected clone, use the estimates from the 2-clone model
+## where there is evidence for only 1 selected clone but 270x WGS data available, use the estimates from the 1-clone model on 270x data
+## where there is evidence for only 1 selected clone and no 270x WGS data available, use the estimates from the 1-clone model on 90x data
+
+
+to.plot. <- rbind(two.clone.model.parameters[two.clone.model.parameters$Parameter %in% c("par_ts1", "par_ts2"),intersect(colnames(two.clone.parameters),
+                                                                                                                         colnames(one.clone.model.parameters))],
+                  one.clone.model.parameters[one.clone.model.parameters$Parameter == "par_t_s_absolute" &
+                                               !one.clone.model.parameters$Paper_ID %in% two.clone.model.parameters$Paper_ID &
+                                               one.clone.model.parameters$Sort == "CD34_deep", intersect(colnames(two.clone.parameters),
+                                                                                                         colnames(one.clone.model.parameters))],
+                  one.clone.model.parameters[one.clone.model.parameters$Parameter == "par_t_s_absolute" &
+                                               !one.clone.model.parameters$Paper_ID %in% two.clone.model.parameters$Paper_ID &
+                                               sample.info[one.clone.model.parameters$Paper_ID,]$`Coverage.WGS.CD34+.2`==0 &
+                                               one.clone.model.parameters$Sort == "CD34", intersect(colnames(two.clone.parameters), colnames(one.clone.model.parameters.neutral))])
+
+## for plotting, average the two 2-clone topologies, in case both topologies fit the data
+
+to.plot.driver <- data.frame()
+
+for(i in unique(to.plot.$Paper_ID)){
+  for(j in unique(to.plot.$Parameter)){
+    tmp <- to.plot.[to.plot.$Paper_ID == i &
+                      to.plot.$Parameter == j,]
+    if(nrow(tmp)==0){next}
+    to.plot.driver <- rbind(to.plot.driver,
+                            data.frame(lower = mean(tmp$lower),
+                                       upper = mean(tmp$upper),
+                                       Parameter = j,
+                                       Median = mean(tmp$Median),
+                                       Paper_ID = i,
+                                       Subclones = tmp$Subclones[1]))
+  }
+}
+
+## driver info:
+to.plot.driver <- to.plot.driver[order(to.plot.driver$Median),]
+to.plot.driver$y <- (1:nrow(to.plot.driver))/nrow(to.plot.driver)
+to.plot.driver$CHIP.mutation <- apply(to.plot.driver, 1, function(x){
+  if(x["Parameter"] != "par_ts2"){
+    as.character(sample.info[x["Paper_ID"],]$CHIP.mutation.associated.with.fit)
+  }else{
+    as.character(sample.info[x["Paper_ID"],]$CHIP.mutation.associated.with.fit.2)
+  }
+})
+to.plot.driver$CHIP.mutation <- factor(to.plot.driver$CHIP.mutation, levels=c("ASXL1", "DNMT3A", "TET2", "unknown driver", "no selected clone"))
+
+## cohort summary
+to.plot. <- data.frame(Age = seq(0, ceiling(max(to.plot.driver$upper)/365/25)*25),
+                       Incidence = sapply(seq(0,ceiling(max(to.plot.driver$upper)/365/25)*25), function(a){sum(to.plot.driver$Median/365<=a)})/nrow(to.plot.driver),
+                       Lower = sapply(seq(0, ceiling(max(to.plot.driver$upper)/365/25)*25), function(a){sum(to.plot.driver$upper/365<=a)})/nrow(to.plot.driver),
+                       Upper = sapply(seq(0,ceiling(max(to.plot.driver$upper)/365/25)*25), function(a){sum(to.plot.driver$lower/365<=a)})/nrow(to.plot.driver))
+
+
+pdf(paste0(analysis.directory, "/Figures/Figure_7d.pdf"), width=3.5, height=2.5)
+
+ggplot(to.plot., aes(x=Age, y=Incidence, ymin=Lower, ymax=Upper)) + geom_ribbon(fill="grey", alpha=0.5) + geom_line() +
+  geom_point(data=to.plot.driver, aes(x=Median/365, y=y, col=CHIP.mutation), inherit.aes = F) +
+  geom_errorbarh(data=to.plot.driver, aes(xmin=lower/365, xmax=upper/365, col=CHIP.mutation, y=y), inherit.aes = F, height=0) +
+  scale_color_manual(values=CHIP.color) + scale_x_continuous(breaks = seq(0, 75, 25)) + theme(aspect.ratio = 1)
+
+dev.off()
+
+
+####################################################################################################################################################
+## In Extended Data Fig. 7e we compare parameter estimates obtained with the one-clone model assuming size compensation for the selected clone and the one-clone model without size-compensation
+## To load the parameters obtained without size compensation, we source the file "Plot_fits_WGS_data_no_size_compensation.R"
+
+source(paste0(custom.script.directory, "/Analysis_and_figures/Plot_fits_WGS_data_no_size_compensation.R"))
+
+## parameters obtained without size compensation
+tmp.1 <- selected.parameters.nsc
+tmp.1$Size_compensation <- "no"
+
+## parameters obtained with size compensation
+tmp.2 <- selected.parameters
+tmp.2$Size_compensation <- "yes"
+
+to.plot <- rbind(tmp.2[tmp.2$Paper_ID %in% tmp.1$Paper_ID & tmp.2$Sort == "CD34" & tmp.2$Depth %in% c(90, 120),],
+                 tmp.1)
+
+rm(tmp.1, tmp.2)
+
+
+pdf(paste0(analysis.directory, "/Figures/Figure_S7e.pdf"), width=3.5, height=2.5)
+
+
+to.plot$x <- as.numeric(factor(to.plot$Paper_ID, levels = sort(unique(to.plot$Paper_ID))))+0.2* 
+  as.numeric(factor(to.plot$Size_compensation, levels = c("yes", "no"))) -1
 
 ## Stem cell number
 
-## selected clone
-to.plot <- selected.parameters[selected.parameters$Parameter=="par_N" & selected.parameters$Sample %in% selection.no.driver,]
-to.plot$ID <- sample.info[to.plot$Sample,]$Paper_ID
-
-## neutral as reference, take medians of lower and upper quantiles as lower and upper bounds across the cohort
-to.plot.neutral <- data.frame(min = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                      neutral.parameters$Parameter=="par_N" &
-                                                                      neutral.parameters$Tissue=="CD34",]$lower, p = 0.025), 2),
-                              max = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                      neutral.parameters$Parameter=="par_N"&
-                                                                      neutral.parameters$Tissue=="CD34",]$upper, p = 0.975), 2),
-                              x=c(0, sum( to.plot$Tissue=="CD34")))
-
-
-## subset on HSCs
-
-ggplot(to.plot[ to.plot$Tissue=="CD34",],
-       aes(x=ID, y=Median, ymin=lower, ymax=upper)) + geom_pointrange() +
-  geom_ribbon(data=to.plot.neutral, aes(ymin = min, ymax = max, x=x), inherit.aes = F, fill="grey", alpha = 0.7) +
-  geom_pointrange() +
-  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="N (log10)") +
-  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0)
-
-## Mutation rate
-
-## selected clone
-to.plot <- selected.parameters[selected.parameters$Parameter=="par_mu" & selected.parameters$Sample %in% selection.no.driver,]
-to.plot$ID <- sample.info[to.plot$Sample,]$Paper_ID
-
-## neutral as reference, take medians of lower and upper quantiles as lower and upper bounds across the cohort
-to.plot.neutral <- data.frame(min = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                      neutral.parameters$Parameter=="par_mu" &
-                                                                      neutral.parameters$Tissue=="CD34",]$lower, p = 0.025), 2),
-                              max = rep(quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                      neutral.parameters$Parameter=="par_mu"&
-                                                                      neutral.parameters$Tissue=="CD34",]$upper, p = 0.975), 2),
-                              x=c(0, sum( to.plot$Tissue=="CD34")))
-
-## subset on HSCs
-
-ggplot(to.plot[ to.plot$Tissue=="CD34",],
-       aes(x=ID, y=Median, ymin=lower, ymax=upper)) + geom_pointrange() +
-  geom_ribbon(data=to.plot.neutral, aes(ymin = min, ymax = max, x=x), inherit.aes = F, fill="grey", alpha = 0.7) +
-  geom_pointrange() +
-  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Number of SSNVs per division") +
-  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0)
+ggplot(to.plot[to.plot$Parameter=="par_N",],
+       aes(x=x, y=Median, ymin=lower, ymax=upper, col=factor(Size_compensation, levels = c("yes", "no")))) + 
+  geom_pointrange(fatten = 1.5) + scale_color_manual(values = c(yes = "black", no = "orange")) +
+  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Number of stem cells (log10)") +
+  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0) +
+  scale_x_continuous(breaks = unique(as.numeric(factor(to.plot$Paper_ID, levels = sort(unique(to.plot$Paper_ID))))+0.3 - 1),
+                     labels = sort(unique(to.plot$Paper_ID)), name = "") +
+  guides(color=guide_legend(title="Size compensation"))
 
 
 ## Division rate
 
-to.plot <- selected.parameters[selected.parameters$Parameter=="par_lambda_ss" & selected.parameters$Sample %in% selection.no.driver,]
-to.plot$ID <- sample.info[to.plot$Sample,]$Paper_ID
-
-## neutral as reference, take medians of lower and upper quantiles as lower and upper bounds across the cohort
-to.plot.neutral <- data.frame(min = rep(10^quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                         neutral.parameters$Parameter=="par_lambda_ss" &
-                                                                         neutral.parameters$Tissue=="CD34",]$lower, p = 0.025)*365, 2),
-                              max = rep(10^quantile(neutral.parameters[neutral.parameters$Sample %in% clearly.neutral.samples &
-                                                                         neutral.parameters$Parameter=="par_lambda_ss"&
-                                                                         neutral.parameters$Tissue=="CD34",]$upper, p = 0.975)*365, 2),
-                              x=c(0, sum( to.plot$Tissue=="CD34")))
+ggplot(to.plot[to.plot$Parameter=="par_lambda_ss",],
+       aes(x=x, y=365*10^Median, ymin=365*10^lower, ymax=365*10^upper, col=factor(Size_compensation, levels = c("yes", "no")))) + 
+  geom_pointrange(fatten = 1.5) + scale_color_manual(values = c(yes = "black", no = "orange")) +
+  theme(axis.text.x=element_text(angle=90)) + scale_y_log10(name ="Division rate (1/y)") +
+  theme(aspect.ratio = 1)+ expand_limits(x = 0) +
+  scale_x_continuous(breaks = unique(as.numeric(factor(to.plot$Paper_ID, levels = sort(unique(to.plot$Paper_ID))))+0.3 - 1),
+                     labels = sort(unique(to.plot$Paper_ID)), name = "") +
+  guides(color=guide_legend(title="Size compensation"))
 
 
-## subset on HSCs
+## Mutation rate
 
-ggplot(to.plot[ to.plot$Tissue=="CD34",],
-       aes(x= ID, y=10^Median*365, ymin=10^lower*365, ymax=10^upper*365)) + geom_pointrange() +
-  geom_ribbon(data=to.plot.neutral, aes(ymin = min, ymax = max, x=x), inherit.aes = F, fill="grey", alpha = 0.7) +
-  geom_pointrange() +
-  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Division rate (1/y)") +
-  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0)
+ggplot(to.plot[to.plot$Parameter=="par_mu",],
+       aes(x=x, y=Median, ymin=lower, ymax=upper, col=factor(Size_compensation, levels = c("yes", "no")))) + 
+  geom_pointrange(fatten = 1.5) + scale_color_manual(values = c(yes = "black", no = "orange")) +
+  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Number of SSNVs per division") +
+  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0) +
+  scale_x_continuous(breaks = unique(as.numeric(factor(to.plot$Paper_ID, levels = sort(unique(to.plot$Paper_ID))))+0.3 - 1),
+                     labels = sort(unique(to.plot$Paper_ID)), name = "") +
+  guides(color=guide_legend(title="Size compensation"))
 
-dev.off()
+## Age of selected clone
 
-####################################################################################################################################################
-## Figure 7a,b: age of the selected clone among cases with unknown driver
-
-to.plot <- selected.parameters[selected.parameters$Parameter=="age_of_clone"& selected.parameters$Sample %in% clearly.selected.samples,]
-to.plot$CHIP.mutation <- sample.info[to.plot$Sample,]$CHIP.mutation.associated.with.fit
-to.plot$ID <- sample.info[to.plot$Sample,]$Paper_ID
-
-pdf(paste0(analysis.directory, "Figures/Figure_7a_b.pdf"), width=5, height=2.5)
-
-## subset on HSCs
-
-ggplot(to.plot[ to.plot$Tissue=="CD34",],
-       aes(x=ID, y=Median, ymin=lower, ymax=upper, col = CHIP.mutation)) +
-  geom_pointrange() + scale_color_manual(values=CHIP.color) +
+ggplot(to.plot[to.plot$Parameter=="age_of_clone",],
+       aes(x=x, y=Median, ymin=lower, ymax=upper, col=factor(Size_compensation, levels = c("yes", "no")))) + 
+  geom_pointrange(fatten = 1.5) + scale_color_manual(values = c(yes = "black", no = "orange")) +
   theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Age of clone (years)") +
-  expand_limits(x = 0, y = 0)
+  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0) +
+  scale_x_continuous(breaks = unique(as.numeric(factor(to.plot$Paper_ID, levels = sort(unique(to.plot$Paper_ID))))+0.3 - 1),
+                     labels = sort(unique(to.plot$Paper_ID)), name = "") +
+  guides(color=guide_legend(title="Size compensation"))
 
-to.plot$CHIP.mutation <- factor(to.plot$CHIP.mutation, levels=c("ASXL1", "DNMT3A", "TET2", "unknown CHIP mutation"))
 
-ggplot(to.plot[ to.plot$Tissue=="CD34",],
-       aes(x=CHIP.mutation, y=Median, ymin=lower, ymax=upper, col = CHIP.mutation)) + geom_boxplot(outlier.shape = NA) +
-  geom_pointrange(position = position_dodge2(width=0.5)) + scale_color_manual(values=CHIP.color) +
-  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Age of clone") +
-  expand_limits(x = 0, y = 0)
+## Growth of selected clone
+
+ggplot(to.plot[to.plot$Parameter=="growth_per_year",],
+       aes(x=x, y=100*Median, ymin=100*lower, ymax=100*upper, col=factor(Size_compensation, levels = c("yes", "no")))) + 
+  geom_pointrange(fatten = 1.5) + scale_color_manual(values = c(yes = "black", no = "orange")) +
+  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Clonal growth per year (%)") +
+  theme(aspect.ratio = 1)+ expand_limits(x = 0, y = 0) +
+  scale_x_continuous(breaks = unique(as.numeric(factor(to.plot$Paper_ID, levels = sort(unique(to.plot$Paper_ID))))+0.3 - 1),
+                     labels = sort(unique(to.plot$Paper_ID)), name = "") +
+  guides(color=guide_legend(title="Size compensation"))
+
 
 dev.off()
 
-####################################################################################################################################################
-## Figure 7c,d: Compare the selective advantage between cases with and without known driver
-
-to.plot <- selected.parameters[selected.parameters$Parameter=="growth_per_year" & selected.parameters$Sample %in% c(selection.no.driver, clearly.selected.samples),]
-to.plot$CHIP.mutation <- sample.info[to.plot$Sample,]$CHIP.mutation.associated.with.fit
-to.plot$ID <- sample.info[to.plot$Sample,]$Paper_ID
-
-pdf(paste0(analysis.directory, "Figures/Figure_7c_d.pdf"), width=5, height=2.5)
-
-# subset on HSCs
-
-ggplot(to.plot[ to.plot$Tissue=="CD34",],
-       aes(x=ID, y=Median, ymin=lower, ymax=upper, col = CHIP.mutation)) +
-  geom_pointrange() + scale_color_manual(values=CHIP.color) +
-  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Growth per year (%)") +
-  expand_limits(x = 0, y = 0)
-
-to.plot$CHIP.mutation <- factor(to.plot$CHIP.mutation, levels=c("ASXL1", "DNMT3A", "TET2", "unknown CHIP mutation"))
-
-ggplot(to.plot[ to.plot$Tissue=="CD34",],
-       aes(x=CHIP.mutation, y=Median, ymin=lower, ymax=upper, col = CHIP.mutation)) + geom_boxplot(outlier.shape = NA) +
-  geom_pointrange(position = position_dodge2(width=0.5)) +
-  scale_color_manual(values=CHIP.color) +
-  theme(axis.text.x=element_text(angle=90)) + scale_y_continuous(name ="Growth per year (%)") +
-  expand_limits(x = 0, y = 0)
-
-dev.off()
-
-####################################################################################################################################################
-## Fig. 7e: plot the incidence of CH driver acquisition
-
-to.plot <- selected.parameters[selected.parameters$Parameter=="par_t_s_absolute"&
-                                 selected.parameters$Sample %in% c(selection.no.driver, clearly.selected.samples) &
-                                 selected.parameters$Tissue=="CD34",]
-to.plot$CHIP.mutation <- sample.info[to.plot$Sample,]$CHIP.mutation.associated.with.fit
-to.plot$ID <- sample.info[to.plot$Sample,]$Paper_ID
-
-## driver info:
-to.plot.driver <- to.plot
-to.plot.driver <- to.plot.driver[order(to.plot.driver$Median),]
-to.plot.driver$y <- (1:nrow(to.plot.driver))/nrow(to.plot.driver)
-
-## cohort summary
-to.plot <- data.frame(Age = seq(0, 100),
-                      Incidence = sapply(seq(0,100), function(a){sum(to.plot$Median/365<=a)})/nrow(to.plot),
-                      Lower = sapply(seq(0,100), function(a){sum(to.plot$upper/365<=a)})/nrow(to.plot),
-                      Upper = sapply(seq(0,100), function(a){sum(to.plot$lower/365<=a)})/nrow(to.plot))
 
 
-pdf(paste0(analysis.directory, "Figures/Figure_7e.pdf"), width=5, height=2.5)
-
-ggplot(to.plot, aes(x=Age, y=Incidence, ymin=Lower, ymax=Upper)) + geom_ribbon(fill="grey", alpha=0.5) + geom_line() +
-  geom_point(data=to.plot.driver, aes(x=Median/365, y=y, col=CHIP.mutation), inherit.aes = F) +
-  geom_errorbarh(data=to.plot.driver, aes(xmin=lower/365, xmax=upper/365, col=CHIP.mutation, y=y), inherit.aes = F, height=0) +
-  scale_color_manual(values=CHIP.color)
-
-dev.off()
