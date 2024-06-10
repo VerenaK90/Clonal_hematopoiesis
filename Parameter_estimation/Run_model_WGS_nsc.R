@@ -39,4 +39,4 @@ snvs <- list(snvs[[patient.id]])
 
 use.sensitivity = F
 
-source("~/Parameter_estimation/Bayesian_fit.R")
+source("~/Parameter_estimation/Bayesian_fit_no_size_compensation.R")

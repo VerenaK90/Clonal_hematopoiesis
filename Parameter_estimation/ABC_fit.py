@@ -1,6 +1,6 @@
 import sys
 
-tumor_id=sys.argv[1]
+tumor_id=sys.argv[1] # hand over using a submission file. Must be in format "sample"/"sort", e.g., N2/MNC
 
 import math
 
