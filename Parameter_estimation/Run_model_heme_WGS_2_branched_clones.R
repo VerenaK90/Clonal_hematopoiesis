@@ -10,7 +10,7 @@ patient.id <- 'A1' # specify patient ID here
 sample.info <- read.xlsx("MetaData/Supplementary Tables.xlsx", sheet = 2, startRow = 6)
 rownames(sample.info) <- sample.info$Paper_ID
 
-load("./RData/WGS/SNVs.RData")
+load("./RData/WGS_heme/SNVs.RData")
 
 depth=270
 min.vaf <- 0.02

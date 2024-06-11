@@ -53,7 +53,7 @@ abc = ABCSMC(model, constrained_prior, distance, population_size = 1000, sampler
 import os
 from tempfile import gettempdir
 
-db = "sqlite:///" + "/Model_fits_2_clones/WGS/" + tumor_id + "/Model_fit_linear.db"
+db = "sqlite:///" + "/Model_fits_2_clones/WGS_heme/" + tumor_id + "/Model_fit_linear.db" # adjust according to sample
 
 abc.new(db, r.observation("mySumStatData"))
 

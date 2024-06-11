@@ -11,7 +11,7 @@ sort <- "CD34" # specify cell sort here, should be either CD34, MNC, MNC_minus_T
 sample.info <- read.xlsx("MetaData/Supplementary Tables.xlsx", sheet = 2, startRow = 6)
 rownames(sample.info) <- sample.info$Paper_ID
 
-load("./RData/WGS/SNVs.RData")
+load("./RData/WGS_heme/SNVs.RData")
 
 if(sort=="CD34"){
   depth <- sample.info[patient.id,"Coverage.WGS.CD34+.1"]
