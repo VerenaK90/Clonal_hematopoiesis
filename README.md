@@ -7,7 +7,7 @@ This repository contains code to reproduce analysis in Körber et al., Detecting
   This section explains how the simulated data were generated and how the model was applied to these data.
 - [Published single cell WGS data](#published-single-cell-wgs-data)
   This section explains how the model was applied to published single-cell WGS data.
-- [Bulk WGS data from human bone marrow](#bulk-WGS-data-from-human-bone-marrow)
+- [Bulk WGS data from human heme](#bulk-WGS-data-from-human-heme)
   This section explains how the model was applied to the newly generated bulk WGS data from human bone marrow.
 - [Bulk WGS data from human brain](#bulk-WGS-data-from-human-brain)
   This section explains how the model was applied to published bulk WGS data from human brain.
@@ -140,7 +140,7 @@ This script
 - compares the estimated age of the selected clones to the original studies (as shown in **Fig. 3j**).
 
 
-## Bulk WGS data from human bone marrow
+## Bulk WGS data from human heme
 
 ### Data pre-processing
 
