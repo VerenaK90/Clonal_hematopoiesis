@@ -27,7 +27,7 @@ min.clone.size = 0.01
 min.prior.size=0.001
 }
 
-load("./RData/SNVs_brain.RData")
+load("./RData/Bae_et_al/SNVs_brain.RData")
 
 if(sample %in% names(snvs)){
 	snvs <- list(snvs[[sample]])
@@ -36,4 +36,4 @@ if(sample %in% names(snvs)){
 }
 
 use.sensitivity = F
-source("~/Parameter_estimation/Bayesian_fit_selection_BM.R")
+source("~/Parameter_estimation/Bayesian_fit.R")
