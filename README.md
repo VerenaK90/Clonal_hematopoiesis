@@ -78,7 +78,7 @@ To estimate the model parameters, we used SCIFER in conjunction with pyABC. To r
 - `min.prior.size`, the lower limit of clone sizes scanned by the parameter estimation. Parameter sets associated with clones < min.clone.size will be evaluated with the neutral model. Defaults to 0.01; we used `min.prior.size=0.01` for all instances except for single cell WGS and simulated data with 270x, where we used `min.prior.size=0.001`.
 - `use.sensitivity` should sequencing sensitivity information be included in addition to binomial sampling? Defaults to `F`; if `T`, a matrix `false.negative.per.vaf` with columns corresponding to the measured VAFs and rows corresponding to individual measurements of the false negative rate at this VAF in addition to binomial noise must be provided. We used `use.sensitivity=F`.
 
-The script Run_model_sim*x.R is to be sourced by [ABC_fit.py](Parameter_estimation/ABC_fit.py). Hence, please also modify the paths in this file. The python script also contains the definition of the prior distributions. Note that we chose priors running between 0 and 0.99 for `s` and between 0 and 1 for `t_s`, but these values are relative values only that will be converted into absolute values in the model script [Bayesian_fit.R](Parameter_estimation/Bayesian_fit.R). Specifically, the minimal and maximal values of `s` and `t_s` are chosen such that the clone has a minimal size of `min.prior.size` and a maximal size of 1. Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to [Analyze_and_plot_fits_sim_data.R](Analysis_and_figures/Analyze_and_plot_fits_sim_data.R)).
+The script Run_model_sim*x.R is to be sourced by [ABC_fit.py](Parameter_estimation/ABC_fit.py). Hence, please also adjust the input and output paths in this file. The python script also contains the definition of the prior distributions. Note that we chose priors running between 0 and 0.99 for `s` and between 0 and 1 for `t_s`, but these values are relative values only that will be converted into absolute values in the model script [Bayesian_fit.R](Parameter_estimation/Bayesian_fit.R). Specifically, the minimal and maximal values of `s` and `t_s` are chosen such that the clone has a minimal size of `min.prior.size` and a maximal size of 1. Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to [Analyze_and_plot_fits_sim_data.R](Analysis_and_figures/Analyze_and_plot_fits_sim_data.R)).
   
 ### Analysis and plots
 
@@ -127,7 +127,7 @@ As with the simulated data, we used SCIFER in conjunction with pyABC to estimate
 
 In comparison to bulk WGS data sequenced at 90x, we here lowered the lower VAF limits, as the single-cell sequencing data provide higher resolution. Moreover, we specified the number of sequenced cells and run the parameter estimation in single-cell mode, allowing for the simulation of single-cell sequencing and generation of pseudo-bulk data thereof. 
 
-The script [Run_model_scWGS.R](Parameter_estimation/Run_model_scWGS.R) is to be sourced by [ABC_fit.py](Parameter_estimation/ABC_fit.py). Hence, please also modify the paths in this file. The python script also contains the definition of the prior distributions. Note that we chose priors running between 0 and 0.99 for s and between 0 and 1 for t_s, but these values are relative values only that will be converted into absolute values by the model script [Bayesian_fit.R](Parameter_estimation/Bayesian_fit.R). Specifically, the minimal and maximal values of s and t_s are chosen such that the clone has a minimal size of `min.prior.size and a maximal size of 1. Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to [Plot_fits_published_data.R](Analysis_and_figures/Plot_fits_published_data.R)).
+The script [Run_model_scWGS.R](Parameter_estimation/Run_model_scWGS.R) is to be sourced by [ABC_fit.py](Parameter_estimation/ABC_fit.py). Hence, please also adjust the input and output paths in this file. The python script also contains the definition of the prior distributions. Note that we chose priors running between 0 and 0.99 for s and between 0 and 1 for t_s, but these values are relative values only that will be converted into absolute values by the model script [Bayesian_fit.R](Parameter_estimation/Bayesian_fit.R). Specifically, the minimal and maximal values of s and t_s are chosen such that the clone has a minimal size of `min.prior.size and a maximal size of 1. Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to [Plot_fits_published_data.R](Analysis_and_figures/Plot_fits_published_data.R)).
 
 ### Analysis and plots
 
@@ -144,7 +144,7 @@ This script
 
 ### Data pre-processing
 
-We ran the model on the filtered SNVs (called using Strelka and Mutect2, see manuscript for details), which we stored, for convenience, in the list object (./RData/WGS/SNVs.RData). 
+We ran the model on the filtered SNVs (called using Strelka and Mutect2, see manuscript for details), which we stored, for convenience, in the list object (./RData/WGS_heme/SNVs.RData). 
 
 ### Parameter estimation 
 #### One-clone model
@@ -154,14 +154,14 @@ As with the other data types, we used SCIFER in conjunction with pyABC to estima
 - `patient.id`, the ID/name of the analyzed subject
 - `sort`, the cell sort to be analyzed ("CD34", "CD34_deep", "MNC", "MNC_minus_T" or "PB_gran")
 - `age`, the age (in days)
-- `snvs`, a named list containing a data frame with VAFs and depths for each individual, as provided in RData/WGS/SNVs.RData 
+- `snvs`, a named list containing a data frame with VAFs and depths for each individual, as provided in RData/WGS_heme/SNVs.RData 
 - `depth`, the sequencing depth used to generate the data 
 - `min.vaf`, the smallest VAF in the data that is to be compared to the model. We used `min.vaf=0.05` for 90x/120x WGS and `min.vaf=0.02`for 270x WGS, according to the respective detection limits.
 - `min.clone.size`, the minimal clone size that can be detected by the model. We used `min.clone.size=0.05` for 90x/120x WGS and `min.vaf=0.02` for 270x WGS, according to the respective detection limits.
 - `min.prior.size`, the lower limit of clone sizes scanned by the parameter estimation. Parameter setzs associated with clones < min.clone.size will be evaluated with the neutral model. We used `min.prior.size=0.01` for 90x/120x WGS and `min.prior.size=0.001` for 270x WGS, according to the respective detection limits.
 - `use.sensitivity` should sequencing sensitivity information be included in addition to binomial sampling? Defaults to F; if T, a matrix `false.negative.per.vaf` with columns corresponding to the measured VAFs and rows corresponding to individual measurements of the false negative rate at this VAF in addition to binomial noise must be provided. We used `use.sensitivity=F`.
 
-The script Run_model_heme_WGS.R is to be sourced by [ABC_fit.py](Parameter_estimation/ABC_fit.py). Hence, please also adjust the paths in this file. The python script also contains the definition of the prior distributions. Note that we chose priors running between 0 and 0.99 for s and between 0 and 1 for t_s, but these values are relative values only that will be converted into absolute values by the model script [Bayesian_fit.R](Parameter_estimation/Bayesian_fit.R). Specifically, the minimal and maximal values of s and t_s are chosen such that the clone has a minimal size of `min.prior.size` and a maximal size of 1. Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to [Plot_fits_WGS_data.R](Analysis_and_figures/Plot_fits_WGS.R)).
+The script Run_model_heme_WGS.R is to be sourced by [ABC_fit.py](Parameter_estimation/ABC_fit.py). Hence, please also adjust the input and output paths in this file. The python script also contains the definition of the prior distributions. Note that we chose priors running between 0 and 0.99 for s and between 0 and 1 for t_s, but these values are relative values only that will be converted into absolute values by the model script [Bayesian_fit.R](Parameter_estimation/Bayesian_fit.R). Specifically, the minimal and maximal values of s and t_s are chosen such that the clone has a minimal size of `min.prior.size` and a maximal size of 1. Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to [Plot_fits_heme_WGS_data.R](Analysis_and_figures/Plot_fits_heme_WGS.R)).
 
 To re-run the analysis for a model modification without size compensation for the selected clone (i.e., the overall stem cell pool expands according to the expansion of the selected clone) refer to the folder [Parameter_estimation](Parameter_estimation) and modify [Run_model_heme_WGS_data_nsc.R](Simulated_data/Run_model_heme_WGS_data_nsc.R) instead of [Run_model_heme_WGS_data.R](Simulated_data/Run_model_heme_WGS_data.R) and perform the model fits in analogy.
 
@@ -171,14 +171,14 @@ In a second step, we used SCIFER in conjunction with pyABC to estimate parameter
 
 - `patient.id`, the ID/name of the analyzed subject
 - `age`, the age (in days)
-- `snvs`, a named list containing a data frame with VAFs and depths for each individual, as provided in RData/WGS/SNVs.RData 
+- `snvs`, a named list containing a data frame with VAFs and depths for each individual, as provided in RData/WGS_heme/SNVs.RData 
 - `depth`, the sequencing depth used to generate the data 
 - `min.vaf`, the smallest VAF in the data that is to be compared to the model. We used `min.vaf=0.02`, according to the detection limit of 270x WGS.
 - `min.clone.size`, the minimal clone size that can be detected by the model. We used `min.clone.size=0.01`, according to the detection limit of 270x WGS.
 - `min.prior.size`, the lower limit of clone sizes scanned by the parameter estimation. Parameter setzs associated with clones < min.clone.size will be evaluated with the neutral model. We used `min.prior.size=0.001`, according to the detection limit of 270x WGS.
 - `use.sensitivity` should sequencing sensitivity information be included in addition to binomial sampling? Defaults to F; if T, a matrix `false.negative.per.vaf` with columns corresponding to the measured VAFs and rows corresponding to individual measurements of the false negative rate at this VAF in addition to binomial noise must be provided. We used `use.sensitivity=F`.
 
-The scripts Run_model_heme_WGS_data_2_branched_clones.R and Run_model_heme_WGS_data_2_linear_clones.R are to be sourced by [ABC_fit_branched.py](Parameter_estimation/ABC_fit_branched.py) and [ABC_fit_linear.py](Parameter_estimation/ABC_fit_linear.py), respectively. Hence, please also adjust the paths in these files. The python scripts also contains the definition of the prior distributions. Note that for the 2-clone model, we parametrized the model with prior distributions on the 2 relative size variables `size1` and `size2`, informed by the results obtained with the one-clone model (see Supplementary Table 10 for details). The relative values will be converted into absolute values for `s1` and `s2` in the model script [Bayesian_fit_multiclone.R](Parameter_estimation/Bayesian_fit_multiclone.R) (see Methods for details). Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to [Plot_fits_WGS_data_2_clone_model.R](Analysis_and_figures/Plot_fits_WGS_2_clone_model.R)).
+The scripts Run_model_heme_WGS_data_2_branched_clones.R and Run_model_heme_WGS_data_2_linear_clones.R are to be sourced by [ABC_fit_branched.py](Parameter_estimation/ABC_fit_branched.py) and [ABC_fit_linear.py](Parameter_estimation/ABC_fit_linear.py), respectively. Hence, please also adjust the input and output paths in these files. The python scripts also contains the definition of the prior distributions. Note that for the 2-clone model, we parametrized the model with prior distributions on the 2 relative size variables `size1` and `size2`, informed by the results obtained with the one-clone model (see Supplementary Table 10 for details). The relative values will be converted into absolute values for `s1` and `s2` in the model script [Bayesian_fit_multiclone.R](Parameter_estimation/Bayesian_fit_multiclone.R) (see Methods for details). Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to [Plot_fits_heme_WGS_data_2_clone_model.R](Analysis_and_figures/Plot_fits_heme_WGS_2_clone_model.R)).
 
 ### Analysis and plots
 
@@ -195,8 +195,38 @@ This script sources the files [Plot_fits_heme_WGS_data_2_clone_model.R](Analysis
 
 ## Bulk WGS data from human brain
 
+This section describes the analysis of published bulk WGS data from Bae et al., Science, 2022 with SCIFER. 
+
 ### Data pre-processing
+
+Download the supplementary tables (S1, S2, S6 and S7) from https://doi.org/10.1126/science.abm6222 and store them into the folder "Published_data/Bae_et_al". For our analysis, we used cases with a coverage >100x and, in addition, all samples with coverage >30x from case N7 (with multiple known driver mutations) as a positive control. Details on the samples included in our analysis can be found in Supplementary Table 8.
+
+The script [Preprocess_bae_et_al.R](Data_preprocessing/Preprocess_bae_et_al.R) reads in the published data from Bae et al., and stores a list object, containing the SNVs, including VAF and depth, identified in each sample in the original publication in (SNVs_brain.RData)[RData/Bae_et_al/SNVs_brain.RData]. Alternatively, this object can be directly downloaded from Mendeley.
 
 ### Parameter estimation 
 
+As with heme WGS data, we used SCIFER in conjunction with pyABC to estimate parameters. To re-run the analysis refer to the folder [Parameter_estimation](Parameter_estimation) and modify [Run_model_brain_WGS_data.R](Simulated_data/Run_model_brain_WGS_data.R) according to the sample specification, with emphasis on the following information
+
+- `patient.id`, the ID/name of the analyzed subject
+- `age`, the age (in days)
+- `snvs`, a named list containing a data frame with VAFs and depths for each individual, as provided in RData/WGS_heme/SNVs.RData 
+- `depth`, the sequencing depth used to generate the data 
+- `min.vaf`, the smallest VAF in the data that is to be compared to the model. We used `min.vaf=0.05` for <150x and `min.vaf=0.02` for ≥150x WGS data, according to the respective detection limits.
+- `min.clone.size`, the minimal clone size that can be detected by the model. We used `min.clone.size=0.05` for <150x and `min.vaf=0.02` for ≥150x WGS data, according to the respective detection limits.
+- `min.prior.size`, the lower limit of clone sizes scanned by the parameter estimation. Parameter setzs associated with clones < min.clone.size will be evaluated with the neutral model. We used `min.prior.size=0.01` for <150x and `min.prior.size=0.001` for ≥150x WGS data, according to the respective detection limits.
+- `use.sensitivity` should sequencing sensitivity information be included in addition to binomial sampling? Defaults to F; if T, a matrix `false.negative.per.vaf` with columns corresponding to the measured VAFs and rows corresponding to individual measurements of the false negative rate at this VAF in addition to binomial noise must be provided. We used `use.sensitivity=F`.
+
+The script Run_model_heme_WGS.R is to be sourced by [ABC_fit.py](Parameter_estimation/ABC_fit.py). Hence, please also adjust the input and output paths in this file. The python script also contains the definition of the prior distributions. Note that we chose priors running between 0 and 0.99 for s and between 0 and 1 for t_s, but these values are relative values only that will be converted into absolute values by the model script [Bayesian_fit.R](Parameter_estimation/Bayesian_fit.R). Specifically, the minimal and maximal values of s and t_s are chosen such that the clone has a minimal size of `min.prior.size` and a maximal size of 1. Analogous conversion of these two parameters into absolute values is also necessary when inspecting the parameter estimates later on (refer to [Plot_fits_brain_WGS_data.R](Analysis_and_figures/Plot_fits_brain_WGS.R)).
+
 ### Analysis and plots
+
+As with the heme data, extract .csv-files from the .db files using the function abc-export (or directly download them from Mendeley). The fits can then be inspected using the script [Plot_fits_brain_WGS_data.R](Analysis_and_figures/Plot_fits_brain_WGS_data.R).
+
+This script 
+- plots model vs data for each sample (as shown in **Figs. 8a-c**)
+- classifies individual cases as neutrally evolving or selected (as shown in **Fig. 8d**)
+- compares the number of cases with evidence for clonal selection across phenotype, sex and brain region (**Extended Data Fig. 10b**)
+- computes the incidence of selection across age groups (**Fig. 8e**)
+- computes highest density estimates for the parameters (as shown in **Fig. 8f,g, Extended Data Fig. 10c,d**)
+- computes the cumulative age-incidence of the onset of clonal selection (**Fig. 8h**)
+
