@@ -6,7 +6,7 @@ import math
 
 from pyabc.external.r import R
 
-r = R(tumor_id+"/Run_model.R") # specify the respective Run_model file, e.g. Run_model_BM_WGS.R
+r = R(tumor_id+"/Run_model.R") # specify the respective Run_model file, e.g. Run_model_heme_WGS.R
 
 model = r.model("myModel")
 distance = r.distance("myDistance")

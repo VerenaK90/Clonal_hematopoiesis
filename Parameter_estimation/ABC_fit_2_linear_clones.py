@@ -10,7 +10,7 @@ import numpy as np
 
 from pyabc.external.r import R
 
-r = R(tumor_id+"Run_model_BM_WGS_data_2_linear_clones.R")
+r = R(tumor_id+"Run_model_heme_WGS_data_2_linear_clones.R")
 
 model = r.model("myModel")
 distance = r.distance("myDistance")
