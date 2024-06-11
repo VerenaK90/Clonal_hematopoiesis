@@ -12,7 +12,7 @@ library(ggridges)
 source("./Settings.R")
 
 ## mutation data
-load("RData/WGS_data/SNVs.RData")
+load("RData/WGS_heme/SNVs.RData")
 
 putative.drivers <- read.xlsx("MetaData/Supplementary Tables.xlsx", startRow = 8, sheet = 7)
 sample.info <- read.xlsx("MetaData/Supplementary Tables.xlsx", sheet = 2, startRow = 6)
@@ -90,13 +90,13 @@ for(patient.id in patient.ids){
     
     if(mode == "branched"){
       
-      fits <- read.csv(paste0(analysis.directory, "Model_fits_2_clones/WGS/", patient.id, "/Model_fit_branched.csv"))
+      fits <- read.csv(paste0(analysis.directory, "Model_fits_2_clones/WGS_heme/", patient.id, "/Model_fit_branched.csv"))
       # mother-daughter relationship for branched evolution: both selected clones (2, 3) stem from the normal cells (1)
       mother.daughter <- matrix(c(1, 2, 1,3), byrow=T, ncol=2)
       
     }else if(mode =="linear"){
       
-      fits <- read.csv(paste0(analysis.directory, "/Model_fits_2_clones/WGS/", patient.id, "/Model_fit_linear.csv"))
+      fits <- read.csv(paste0(analysis.directory, "/Model_fits_2_clones/WGS_heme/", patient.id, "/Model_fit_linear.csv"))
       # mother-daughter relationship for linear evolution: the second selected clone (3) stems from the first selected clone (2), which stems from normal cells (1)
       mother.daughter <- matrix(c(1, 2, 2,3), byrow=T, ncol=2)
       
@@ -189,7 +189,7 @@ for(patient.id in patient.ids){
     
     to.plot <- melt(to.plot)
     
-    pdf(paste0(analysis.directory, "Model_fits_2_clones/WGS/", patient.id, "/Parameter_estimates_", mode, ".pdf"), width = 6, height = 6)
+    pdf(paste0(analysis.directory, "Model_fits_2_clones/WGS_heme/", patient.id, "/Parameter_estimates_", mode, ".pdf"), width = 6, height = 6)
 
     p <- ggplot(to.plot, aes(x=value, y= 0, fill = stat(quantile))) +
       geom_density_ridges_gradient(quantile_lines = TRUE, quantile_fun = hdi, vline_linetype = 2) +
@@ -401,7 +401,7 @@ for(patient.id in patient.ids){
     source(paste0(custom.script.directory, "/Parameter_estimation/Bayesian_fit_multiclone.R"))
     
     # simulate the trajectories for 100 model fits
-    if(!file.exists(paste0(analysis.directory, "Model_fits_2_clones/WGS/", patient.id, "/Sim_trajectories_", mode, ".RData"))){
+    if(!file.exists(paste0(analysis.directory, "Model_fits_2_clones/WGS_heme/", patient.id, "/Sim_trajectories_", mode, ".RData"))){
       sim <- matrix(0, nrow=100, ncol=length(mySumStatData$mutation.count[[1]]))
       
       for(j in 1:100){
@@ -424,15 +424,15 @@ for(patient.id in patient.ids){
                                        min.model = min.pred, max.model=max.pred,
                                        Age=mySumStatData$age/365)
       
-      save(sim, data.vs.prediction, file=paste0(analysis.directory, "Model_fits_2_clones/WGS/", patient.id, "/Sim_trajectories_", mode, ".RData"))
+      save(sim, data.vs.prediction, file=paste0(analysis.directory, "Model_fits_2_clones/WGS_heme/", patient.id, "/Sim_trajectories_", mode, ".RData"))
       
     }else{
-      load(paste0(analysis.directory, "Model_fits_2_clones/WGS/", patient.id, "/Sim_trajectories_", mode, ".RData"))
+      load(paste0(analysis.directory, "Model_fits_2_clones/WGS_heme/", patient.id, "/Sim_trajectories_", mode, ".RData"))
     }
     
     to.plot <- data.vs.prediction
     
-    grDevices::pdf(paste0(analysis.directory, "/Model_fit2_2_clones/WGS/", patient.id, "/Model_fit_", mode, ".pdf"), width=3, height=2.5)
+    grDevices::pdf(paste0(analysis.directory, "/Model_fit2_2_clones/WGS_heme/", patient.id, "/Model_fit_", mode, ".pdf"), width=3, height=2.5)
     
     max.y <- max(to.plot$max.model)
     

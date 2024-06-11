@@ -11,7 +11,7 @@ library(ggridges)
 source("./Settings.R")
 
 ## mutation data
-load("RData/WGS_data/SNVs.RData")
+load("RData/WGS_heme/SNVs.RData")
 
 putative.drivers <- read.xlsx("MetaData/Supplementary Tables.xlsx", startRow = 8, sheet = 7)
 sample.info <- read.xlsx("MetaData/Supplementary Tables.xlsx", sheet = 2, startRow = 6)
@@ -55,7 +55,7 @@ for(patient.id in patient.ids){
   ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ######
   ###### load observed data
   
-  directory <- paste0(analysis.directory, "/Model_fits/WGS/", paste(patient.id, sort, "nsc", sep="_"))
+  directory <- paste0(analysis.directory, "/Model_fits/WGS_heme/", paste(patient.id, sort, "nsc", sep="_"))
   if(!file.exists(paste0(directory,  "/Model_fit.csv"))){next}
   fits <- read.csv(paste0(directory,  "/Model_fit.csv"))
 
