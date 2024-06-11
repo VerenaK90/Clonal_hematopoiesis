@@ -5,9 +5,8 @@ tumor_id=sys.argv[1] # hand over using a submission file. Must be in format "sam
 import math
 
 from pyabc.external.r import R
-print(tumor_id+"/Run_model.R")
 
-r = R(tumor_id+"/Run_model.R")
+r = R(tumor_id+"/Run_model.R") # specify the respective Run_model file, e.g. Run_model_BM_WGS.R
 
 model = r.model("myModel")
 distance = r.distance("myDistance")
