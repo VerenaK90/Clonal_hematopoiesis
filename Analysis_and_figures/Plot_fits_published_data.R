@@ -6,7 +6,6 @@
 library(cdata)
 library(scales)
 library(openxlsx)
-library(FLORENCE)
 
 source("~/Settings.R")
 
@@ -40,7 +39,7 @@ for(patient in 1:nrow(sample.info.published.data)){
     min.clone.size = 0.01
     min.prior.size = 0.001
    
-    directory <- paste0(analysis.directory, "Model_fits/Published_data/", sample.info.published.data[patient,]$Path)
+    directory <- paste0(analysis.directory, "/Model_fits/Published_data/", sample.info.published.data[patient,]$Path)
     
     if(!file.exists(paste0(directory, "/Model_fit.csv"))){next}
     fits <- read.csv(paste0(directory, "/Model_fit.csv"))
@@ -413,15 +412,15 @@ save(parameters, neutral.parameters, selected.parameters, model.support.selectio
 ## Classify samples
 
 ## normal samples (no driver, no evidence for selection)
-normal.samples.published.data <- sample.info.published.data[sample.info.published.data$CHIP.mutation %in% c("healthy donor", "unknown driver"),]$ID
+normal.samples.published.data <- sample.info.published.data[sample.info.published.data$CHIP.mutation %in% c("no driver", "unknown driver"),]$ID
 normal.samples.published.data <- intersect(normal.samples.published.data, names(model.support.selection)[model.support.selection<15]) ## require < 15 for clear-cut normals
 
 ## selected samples (driver and evidence for selection)
-selected.samples.published.data <- sample.info.published.data[!sample.info.published.data$CHIP.mutation %in% c("healthy donor", "unknown driver", "multiple drivers"),]$ID
+selected.samples.published.data <- sample.info.published.data[!sample.info.published.data$CHIP.mutation %in% c("no driver", "unknown driver", "multiple drivers"),]$ID
 selected.samples.published.data <- intersect(selected.samples.published.data, names(model.support.selection)[model.support.selection>=15]) ## require < 15 for clear-cut normals
 
 ## selected samples (no driver, but evidence for selection)
-selected.no.driver.published.data <- sample.info.published.data[sample.info.published.data$CHIP.mutation %in% c("healthy donor", "unknown driver", "multiple drivers"),]$ID
+selected.no.driver.published.data <- sample.info.published.data[sample.info.published.data$CHIP.mutation %in% c("no driver", "unknown driver", "multiple drivers"),]$ID
 selected.no.driver.published.data <- intersect(selected.no.driver.published.data, names(model.support.selection)[model.support.selection>=15]) ## require < 15 for clear-cut normals
 
 ############################################################################################################################################
@@ -814,7 +813,7 @@ ggplot(to.plot,
 to.plot <- selected.parameters[selected.parameters$Parameter=="age_of_clone" & selected.parameters$Sample %in% selected.no.driver.published.data,]
 to.plot$CHIP.mutation <- sapply(to.plot$Sample, function(x){
   sample.info.published.data[sample.info.published.data$ID==x,]$CHIP.mutation})
-to.plot$CHIP.mutation <- replace(to.plot$CHIP.mutation, to.plot$CHIP.mutation=="healthy donor", "unknown driver")
+to.plot$CHIP.mutation <- replace(to.plot$CHIP.mutation, to.plot$CHIP.mutation=="no driver", "unknown driver")
 
 ggplot(to.plot, 
        aes(x=Sample, y=Median, ymin=lower, ymax=upper, col=CHIP.mutation)) +
@@ -828,7 +827,7 @@ ggplot(to.plot,
 to.plot <- selected.parameters[selected.parameters$Parameter=="growth_per_year" & selected.parameters$Sample %in% selected.no.driver.published.data,]
 to.plot$CHIP.mutation <- sapply(to.plot$Sample, function(x){
   sample.info.published.data[sample.info.published.data$ID==x,]$CHIP.mutation})
-to.plot$CHIP.mutation <- replace(to.plot$CHIP.mutation, to.plot$CHIP.mutation=="healthy donor", "unknown driver")
+to.plot$CHIP.mutation <- replace(to.plot$CHIP.mutation, to.plot$CHIP.mutation=="no driver", "unknown driver")
 
 ggplot(to.plot, 
        aes(x=Sample, y=Median*100, ymin=lower*100, ymax=upper*100, col=CHIP.mutation)) +
