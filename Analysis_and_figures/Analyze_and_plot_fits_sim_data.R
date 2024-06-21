@@ -3,8 +3,8 @@ source("./Settings.R")
 library(cdata)
 
 # define where output is to be stored
-study.directory <- paste0("Model_fits/Simulated_data/")
-sample.info <- read.xlsx("MetaData/Sample_information_simulated_data.xlsx", sheet = 1)
+study.directory <- paste0("./data/Model_fits/Simulated_data/")
+sample.info <- read.xlsx(paste0(meta.data, "/Sample_information_simulated_data.xlsx"), sheet = 1)
 rownames(sample.info) <- sample.info$SampleID
 
 ######################### ######################### ######################### ######################### #########################
@@ -24,7 +24,7 @@ model.support.selection <- matrix(NA, nrow=3, ncol=nrow(sample.info), dimnames =
 ## collect statistics of the fits - how many fits suggest selection, how many suggest neutral, what's the size of the true clone and what's the size of the inferred clone?
 inference.stats <- as.data.frame(matrix(0, ncol=4, nrow = nrow(sample.info),
                             dimnames = list(sample.info$SampleID, c("N_fits_sel", "N_fits_neutral", "Size_true_clone", "Inferred_size"))))
-inference.stats$Size_true_clone <- sample.info$CH_VAF
+inference.stats$Size_true_clone <- sample.info$CH.clone.size
 ## separate statistics for each simulated sequencing depth
 inference.stats <- list(`30`=inference.stats, `90`=inference.stats, `270`=inference.stats)
 
@@ -122,10 +122,10 @@ for(patient.id in sample.info$SampleID){
     p <- ggplot(data=to.plot, aes(x=VAF, y=mean, ymin=mean-sd, ymax=mean+sd)) +
       geom_ribbon(data=to.plot, aes(x=VAF, y=mean, ymin=min.model,ymax=max.model), alpha=1, fill=model.colors["selection"]) + ggtitle("Bone marrow")+
       geom_pointrange(lwd=0.25, shape=1, fatten=1) + scale_y_continuous(name="Cumulative # of mutations") +
-      scale_x_continuous(limits=c(0, 0.6)) + geom_line(aes(x=VAF, y=best.fit.model.BM), inherit.aes = F, col="black")
+      scale_x_continuous(limits=c(0, 0.6)) 
 
-    if(sample.info[patient.id,]$CH_VAF>0){
-      p <- p + geom_vline(xintercept = sample.info[patient.id,]$CH_VAF)
+    if(sample.info[patient.id,]$CH.clone.size>0){
+      p <- p + geom_vline(xintercept = sample.info[patient.id,]$CH.clone.size)
     }
 
     print(p)
@@ -148,8 +148,8 @@ for(patient.id in sample.info$SampleID){
       theme(aspect.ratio = 1) +
       scale_x_continuous(limits=xlimits, breaks=xbreaks, labels=xlabels) + coord_cartesian(ylim=c(0, max.y))
 
-    if(sample.info[patient.id,]$CH_VAF>0){
-      p <- p + geom_vline(xintercept = 1/sample.info[patient.id,]$CH_VAF)
+    if(sample.info[patient.id,]$CH.clone.size>0){
+      p <- p + geom_vline(xintercept = 1/sample.info[patient.id,]$CH.clone.size)
     }
 
     print(p)
@@ -434,31 +434,67 @@ save(parameters, neutral.parameters, selected.parameters, plotlist.model.vs.data
 ######################### ######################### ######################### ######################### #########################
 ### Figure 2a-c: ROC curve for varying thresholds
 
+# 30x seq depth
+tmp <- inference.stats[["30"]]
+colnames(tmp) <- c("Selection", "Neutral", "Size_true_clone", "Inferred_size")
+tmp <- tmp[tmp$Selection + tmp$Neutral>0,]
+## to build the ROC curve, use different cutoffs for the evidence, ranging from 5% to 100% in 5% steps:
+
+roc <- data.frame()
+
+for(cutoff in seq(0, 100, 5)){
+  for(size in setdiff(unique(tmp$Size_true_clone), 0)){
+    
+    ## I. True positive rate: true positives/(true positives + false negatives)
+    ## all cases with this clone size
+    all.cases.w.clone.size <- sum(tmp$`Size_true_clone`==size)
+    if(all.cases.w.clone.size==0){next}
+    true.cases.w.clone.size <- sum(tmp$`Size_true_clone`==size & ceiling(tmp$Inferred_size<=1.5*size) &
+                                     tmp$Inferred_size >= floor(0.5*size) & tmp$Selection/10 >= cutoff)
+    
+    tp <- true.cases.w.clone.size/all.cases.w.clone.size
+    
+    ## II. False positive rate: false positives/(false positives + true negatives)
+    false.cases.w.clone.size <- sum(tmp$`Size_true_clone`==0 & tmp$Inferred_size==size & tmp$Selection/10 >= cutoff )
+    true.negatives.w.clone.size <- sum((tmp$`Size_true_clone`==0 & tmp$Inferred_size!=size  )|
+                                         (tmp$`Size_true_clone`==0 & tmp$Inferred_size==size & tmp$Selection/10 < cutoff))
+    
+    fp <- false.cases.w.clone.size/(false.cases.w.clone.size + true.negatives.w.clone.size)
+    
+    roc <- rbind(roc, data.frame(TP=tp, FP=fp, Cutoff = cutoff, size = size ))
+    
+  }
+}
+
+roc <- roc[order(roc$TP),]
+roc <- roc[order(roc$FP),]
+
+roc.30 <- roc
+
 # 90x seq depth
-to.plot <- inference.stats[["90"]]
-colnames(to.plot) <- c("Selection", "Neutral", "Size_true_clone", "Inferred_size")
-to.plot <- to.plot[to.plot$Selection + to.plot$Neutral>0,]
-to.plot <- to.plot[!rownames(to.plot) %in% paste0("STN", 11:20),]
+tmp <- inference.stats[["90"]]
+colnames(tmp) <- c("Selection", "Neutral", "Size_true_clone", "Inferred_size")
+tmp <- tmp[tmp$Selection + tmp$Neutral>0,]
 ## to build the ROC curve, use different cutoffs for the evidence, ranging from 5% to 100% in 5% steps:
 
 roc <- data.frame()
 
 for(cutoff in seq(1, 100, 1)){
-  for(size in setdiff(unique(to.plot$Size_true_clone), 0)){
+  for(size in setdiff(unique(tmp$Size_true_clone), 0)){
 
     ## I. True positive rate: true positives/(true positives + false negatives)
     ## all cases with this clone size
-    all.cases.w.clone.size <- sum(to.plot$`Size_true_clone`==size)
+    all.cases.w.clone.size <- sum(tmp$`Size_true_clone`==size)
     if(all.cases.w.clone.size==0){next}
-    true.cases.w.clone.size <- sum(to.plot$`Size_true_clone`==size & to.plot$Inferred_size<=1.5*size &
-                                     to.plot$Inferred_size >= 0.5*size & to.plot$Selection/10 >= cutoff)
+    true.cases.w.clone.size <- sum(tmp$`Size_true_clone`==size & tmp$Inferred_size<=1.5*size &
+                                     tmp$Inferred_size >= 0.5*size & tmp$Selection/10 >= cutoff)
 
     tp <- true.cases.w.clone.size/all.cases.w.clone.size
 
     ## II. False positive rate: false positives/(false positives + true negatives)
-    false.cases.w.clone.size <- sum(to.plot$`Size_true_clone`==0 & to.plot$Inferred_size==size & to.plot$Selection/10 >= cutoff )
-    true.negatives.w.clone.size <- sum((to.plot$`Size_true_clone`==0 & to.plot$Inferred_size!=size  )|
-                                         (to.plot$`Size_true_clone`==0 & to.plot$Inferred_size==size & to.plot$Selection/10 < cutoff))
+    false.cases.w.clone.size <- sum(tmp$`Size_true_clone`==0 & tmp$Inferred_size==size & tmp$Selection/10 >= cutoff )
+    true.negatives.w.clone.size <- sum((tmp$`Size_true_clone`==0 & tmp$Inferred_size!=size  )|
+                                         (tmp$`Size_true_clone`==0 & tmp$Inferred_size==size & tmp$Selection/10 < cutoff))
 
     fp <- false.cases.w.clone.size/(false.cases.w.clone.size + true.negatives.w.clone.size)
 
@@ -470,9 +506,49 @@ for(cutoff in seq(1, 100, 1)){
 roc <- roc[order(roc$TP),]
 roc <- roc[order(roc$FP),]
 
+roc.90 <- roc
 
-# plot TP against FP
-p <- ggplot(roc, aes(x=FP, y=TP, col=size, group=size)) +  geom_line() +
+
+# 270x seq depth
+tmp <- inference.stats[["270"]]
+colnames(tmp) <- c("Selection", "Neutral", "Size_true_clone", "Inferred_size")
+tmp <- tmp[tmp$Selection + tmp$Neutral>0,]
+## to build the ROC curve, use different cutoffs for the evidence, ranging from 5% to 100% in 5% steps:
+
+roc <- data.frame()
+
+for(cutoff in seq(0, 100, 5)){
+  for(size in setdiff(unique(tmp$Size_true_clone), 0)){
+    
+    ## I. True positive rate: true positives/(true positives + false negatives)
+    ## all cases with this clone size
+    all.cases.w.clone.size <- sum(tmp$`Size_true_clone`==size)
+    if(all.cases.w.clone.size==0){next}
+    true.cases.w.clone.size <- sum(tmp$`Size_true_clone`==size & ceiling(tmp$Inferred_size<=1.5*size) &
+                                     tmp$Inferred_size >= floor(0.5*size) &
+                                     tmp$Selection/10 >= cutoff)
+    
+    tp <- true.cases.w.clone.size/all.cases.w.clone.size
+    
+    ## II. False positive rate: false positives/(false positives + true negatives)
+    false.cases.w.clone.size <- sum(tmp$`Size_true_clone`==0 & tmp$Inferred_size==size  & tmp$Selection/10 >= cutoff )
+    true.negatives.w.clone.size <- sum((tmp$`Size_true_clone`==0 & tmp$Inferred_size!=size  )|
+                                         (tmp$`Size_true_clone`==0 & tmp$Inferred_size==size & tmp$Selection/10 < cutoff))
+    
+    fp <- false.cases.w.clone.size/(false.cases.w.clone.size + true.negatives.w.clone.size)
+    
+    roc <- rbind(roc, data.frame(TP=tp, FP=fp, Cutoff = cutoff, size = size ))
+    
+  }
+}
+
+roc <- roc[order(roc$TP),]
+roc <- roc[order(roc$FP),]
+
+roc.270 <- roc
+
+# plot TP against FP for 90x
+p <- ggplot(roc.90, aes(x=FP, y=TP, col=size, group=size)) +  geom_line() +
   scale_color_gradientn(colors=hcl.colors(n = 7, palette="Zissou 1"), breaks=c(5, 10, 25, 50), trans="log10", limits=c(2.5, 100)) +
   geom_abline(slope = 1, intercept = 0, linetype=2) + scale_x_continuous(limits=c(0,1)) + ggtitle("90x") +
   geom_point(data=roc[roc$Cutoff==15,], aes(x=FP, y=TP), col="firebrick")
@@ -483,6 +559,9 @@ pdf(paste0(analysis.directory, "/Figures/Figure_2_a.pdf"), width=4, height = 3)
 print(p)
 
 dev.off()
+
+
+
 
 ######################### ######################### ######################### ######################### #########################
 ### Figure 1c, compute AUC; add point 1/1 to every combination
@@ -546,7 +625,7 @@ for(patient.id in sample.info$SampleID){
   ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ######
   ###### load observed data
 
-  directory <- paste0(study.directory, patient.id, "/Model_fit/", depth, "/")
+  directory <- paste0(study.directory, patient.id, "/", depth, "/")
   if(!file.exists(paste0(directory, "/Model_fit.csv"))){next}
   fits <- read.csv(paste0(directory, "/Model_fit.csv"))
 
