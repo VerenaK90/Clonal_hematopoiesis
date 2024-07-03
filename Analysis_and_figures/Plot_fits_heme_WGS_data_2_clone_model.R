@@ -54,19 +54,15 @@ plotlist.model.vs.data.2cm <- list()
 
 
 for(patient.id in patient.ids){
-  
   snvs <- list(snvs.cd34.deep[[patient.id]])
   age <- sample.info[patient.id,]$Age*365
   
-  driver.information <- putative.drivers[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
-                                            colnames(putative.drivers)[grepl("CD34", colnames(putative.drivers)) &
-                                                                         grepl("deep", colnames(putative.drivers))])]
+  driver.information <- putative.drivers[,c("FORMAT", "CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
+                                            paste0(patient.id, "_", sort.type))]
   
-  driver.information <- driver.information[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
-                                              colnames(driver.information)[grep(paste0(patient.id, "_"), colnames(driver.information))])]
   if(any(grepl(paste0(patient.id, "_"), colnames(driver.information)))){
-    driver.information$VAF <- Extract.info.from.vcf(driver.information, info="VAF", type="snvs", mutationcaller="mpileup", sample.col.mpileup = colnames(driver.information)[grep(paste0(patient.id, "_"), colnames(driver.information))])
-    driver.information$Depth <- Extract.info.from.vcf(driver.information, info="depth", type="snvs", mutationcaller="mpileup", sample.col.mpileup = colnames(driver.information)[grep(paste0(patient.id, "_"), colnames(driver.information))])
+    driver.information$VAF <- Extract.info.from.vcf(driver.information, info="VAF", type="snvs", mutationcaller="mpileup", sample.col.mpileup = paste0(patient.id, "_", sort.type))
+    driver.information$Depth <- Extract.info.from.vcf(driver.information, info="depth", type="snvs", mutationcaller="mpileup", sample.col.mpileup = paste0(patient.id, "_", sort.type))
     driver.information$nvar <- driver.information$VAF*driver.information$Depth
     driver.information <- driver.information[driver.information$nvar>2 &
                                                driver.information$Depth > 1/3*depth,,drop=F]
@@ -80,8 +76,8 @@ for(patient.id in patient.ids){
   }
   
   ## subset on drivers in "TET2", "DNMT3A", "ASXL1" and, in T2, KMT2D - the others are putative drivers with unknown consequences
-  driver.information <- driver.information[driver.information$GENE %in% c("DNMT3A", "TET2", "ASXL1") |
-                                             (driver.information$GENE == "KMT2D" & patient.id == "T2"),]
+  driver.information <- driver.information[driver.information$VAF != ! & (driver.information$GENE %in% c("DNMT3A", "TET2", "ASXL1") |
+                                             (driver.information$GENE == "KMT2D" & patient.id == "T2")),]
   
   ## for each sample we fit 2-clone models with phylogenetic topologies according to linear and branched evolution
   for(mode in c("branched", "linear")){
@@ -90,7 +86,7 @@ for(patient.id in patient.ids){
     
     if(mode == "branched"){
       
-      fits <- read.csv(paste0(analysis.directory, "Model_fits_2_clones/WGS_heme/", patient.id, "/Model_fit_branched.csv"))
+      fits <- read.csv(paste0(analysis.directory, "/Model_fits_2_clones/WGS_heme/", patient.id, "/Model_fit_branched.csv"))
       # mother-daughter relationship for branched evolution: both selected clones (2, 3) stem from the normal cells (1)
       mother.daughter <- matrix(c(1, 2, 1,3), byrow=T, ncol=2)
       
@@ -189,7 +185,7 @@ for(patient.id in patient.ids){
     
     to.plot <- melt(to.plot)
     
-    pdf(paste0(analysis.directory, "Model_fits_2_clones/WGS_heme/", patient.id, "/Parameter_estimates_", mode, ".pdf"), width = 6, height = 6)
+    pdf(paste0(analysis.directory, "data/Model_fits_2_clones/WGS_heme/", patient.id, "/Parameter_estimates_", mode, ".pdf"), width = 6, height = 6)
 
     p <- ggplot(to.plot, aes(x=value, y= 0, fill = stat(quantile))) +
       geom_density_ridges_gradient(quantile_lines = TRUE, quantile_fun = hdi, vline_linetype = 2) +
@@ -424,15 +420,15 @@ for(patient.id in patient.ids){
                                        min.model = min.pred, max.model=max.pred,
                                        Age=mySumStatData$age/365)
       
-      save(sim, data.vs.prediction, file=paste0(analysis.directory, "Model_fits_2_clones/WGS_heme/", patient.id, "/Sim_trajectories_", mode, ".RData"))
+      save(sim, data.vs.prediction, file=paste0(analysis.directory, "/Model_fits_2_clones/WGS_heme/", patient.id, "/Sim_trajectories_", mode, ".RData"))
       
     }else{
-      load(paste0(analysis.directory, "Model_fits_2_clones/WGS_heme/", patient.id, "/Sim_trajectories_", mode, ".RData"))
+      load(paste0(analysis.directory, "/Model_fits_2_clones/WGS_heme/", patient.id, "/Sim_trajectories_", mode, ".RData"))
     }
     
     to.plot <- data.vs.prediction
     
-    grDevices::pdf(paste0(analysis.directory, "/Model_fit2_2_clones/WGS_heme/", patient.id, "/Model_fit_", mode, ".pdf"), width=3, height=2.5)
+    grDevices::pdf(paste0(analysis.directory, "/Model_fits_2_clones/WGS_heme/", patient.id, "/Model_fit_", mode, ".pdf"), width=3, height=2.5)
     
     max.y <- max(to.plot$max.model)
     
@@ -476,14 +472,14 @@ for(patient.id in patient.ids){
     
     
     if(model.support.selection.2_clones[1,paste(patient.id, mode, sep="_")] > 15){
-      p <- p + geom_ribbon(data = data.frame(x = unlist(hdinterval.selection.1[hdinterval.selection.1$Parameter=="clone_size_1",c("lower", "upper")]),
+      p <- p + geom_ribbon(data = data.frame(x = unlist(hdinterval.selection.1clone[hdinterval.selection.1clone$Parameter=="clone_size_1",c("lower", "upper")]),
                                              ymin = c(0,0),
                                              ymax = c(max.y, max.y)), aes(x=2/x, ymin=ymin, ymax = ymax), inherit.aes = F, fill="darkblue", alpha = 0.5)
       
     }
     
     if(model.support.selection.2_clones[2,paste(patient.id, mode, sep="_")] > 15){
-      p <- p + geom_ribbon(data = data.frame(x = unlist(hdinterval.selection.2[hdinterval.selection.2$Parameter=="clone_size_2",c("lower", "upper")]),
+      p <- p + geom_ribbon(data = data.frame(x = unlist(hdinterval.selection.2clones[hdinterval.selection.2clones$Parameter=="clone_size_2",c("lower", "upper")]),
                                              ymin = c(0,0),
                                              ymax = c(max.y, max.y)), aes(x=2/x, ymin=ymin, ymax = ymax), inherit.aes = F, fill="darkgreen", alpha = 0.5)
     }
@@ -498,11 +494,11 @@ for(patient.id in patient.ids){
 }
 
 ####################################################################################################################################################
-## Figures 6g,i, Extended Data. Fig. 8e,f: plot the model fits 
+## Figures 6c,e, Extended Data. Fig. 8e,f: plot the model fits 
 
-pdf(paste0(analysis.directory, "/Figures/Figure_6gi_S8ef.pdf"), width=8, height=6)
+pdf(paste0(analysis.directory, "/Figures/Figure_6ce_S8ef.pdf"), width=8, height=6)
 
-ggarrange(plotlist=plotlist.model.vs.data[c("A2_linear", "T3_linear", "U6_branched",
+ggarrange(plotlist=plotlist.model.vs.data.2cm[c("A2_linear", "T3_linear", "U6_branched",
                                             "A1_branched", "D1_branched", "D2_linear",
                                             "D4_branched", "U2_branched", "U3_branched")],
   nrow=3, ncol=3)
@@ -510,7 +506,7 @@ ggarrange(plotlist=plotlist.model.vs.data[c("A2_linear", "T3_linear", "U6_branch
 dev.off()
 
 ####################################################################################################################################################
-## Figure 6h plot the model support for the second clone 
+## Figure 6d plot the model support for the second clone 
 
 to.plot <- melt(t(model.support.selection.2_clones), value.name = "P_selection")
 colnames(to.plot)[c(1,2)] <- c("Fit_ID", "Clone")
@@ -527,7 +523,7 @@ to.plot$Clone_size <- apply(to.plot, 1, function(x){
   mode <- gsub(".*_", "", x[1])
   res <- selected.parameters.2cm.2clones[selected.parameters.2cm.2clones$Paper_ID == x[3] &
                                        selected.parameters.2cm.2clones$Mode == mode &
-                                       selected.parameters.2cm.2clones$Parameter=="true_size_2" &
+                                       selected.parameters.2cm.2clones$Parameter=="clone_size_2" &
                                        x[4] == "P_selection",]$Median
   if(length(res)==0){
     return(0)
@@ -539,7 +535,7 @@ to.plot$Type <- factor(to.plot$Type, levels=c("P_neutral", "P_selection"))
 to.plot$Clone_size[to.plot$Clone_size==0] <- NA
 
 
-pdf(paste0(analysis.directory, "/Figures/Figure_6h.pdf"), width=6, height=3.5)
+pdf(paste0(analysis.directory, "/Figures/Figure_6d.pdf"), width=6, height=3.5)
 
 to.plot.selected <- to.plot[ !is.na(to.plot$`Posterior probability`) & !grepl("N", to.plot$ID),]
 
