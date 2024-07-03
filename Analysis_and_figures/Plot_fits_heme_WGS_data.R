@@ -23,6 +23,7 @@ patient.ids <- sample.info$Paper_ID
 ####### Set parameters as used for model fits
 use.sensitivity <- F
 sample.color["CD34+"] <- sample.color["CD34"]
+sample.color["CD34+_deep"] <- sample.color["CD34"]
 seq.type <- "bulk"
 
 ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ######
@@ -37,7 +38,7 @@ neutral.parameters <- data.frame()
 selected.parameters <- data.frame()
 
 # collect model support for selection (%)
-model.support.selection <- matrix(NA, nrow=4, ncol=length(patient.ids), dimnames = list(c("MNC", "CD34", "MNC_minus_T", "PB_gran"),
+model.support.selection <- matrix(NA, nrow=5, ncol=length(patient.ids), dimnames = list(c("MNC", "CD34", "CD34_deep", "MNC-T", "PB"),
                                                                                       patient.ids))
 
 plotlist.model.vs.data <- list()
@@ -46,7 +47,7 @@ for(patient.id in patient.ids){
   print(patient.id)
   age <- sample.info[patient.id, ]$Age*365
 
-  cell.sorts <- c("CD34", "MNC", "MNC_minus_T", "PB_gran", "CD34_deep")
+  cell.sorts <- c("CD34", "MNC", "MNC-T", "PB", "CD34_deep")
 
   for(sort in cell.sorts){
 
@@ -56,27 +57,27 @@ for(patient.id in patient.ids){
     
     # specify coverage and snvs of this sample
     if(sort == "CD34"){
-      depth <- sample.info[patient.id,]$`Coverage.WGS.CD34+.1`
-      if(depth==0){next}
+      depth <- as.numeric(sample.info[patient.id,]$`Coverage.WGS.CD34+.1`)
+      if(is.na(depth) | depth==0){next}
       snvs <- list(snvs.cd34[[patient.id]])
     }else if(sort == "MNC"){
-      depth <- sample.info[patient.id,]$Coverage.WGS.BM.MNC
-      if(depth==0){next}
+      depth <- as.numeric(sample.info[patient.id,]$Coverage.WGS.BM.MNC)
+      if(is.na(depth) | depth==0){next}
       snvs <- list(snvs.mnc[[patient.id]])
-    }else if (sort =="MNC_minus_T"){
-      depth <- sample.info[patient.id,]$`Coverage.WGS.BM.MNC–T`
-      if(depth==0){next}
+    }else if (sort =="MNC-T"){
+      depth <- as.numeric(sample.info[patient.id,]$`Coverage.WGS.BM.MNC–T`)
+      if(is.na(depth) | depth==0){next}
       snvs <- list(snvs.mnc_minus_t[[patient.id]])
     }else if (sort == "CD34_deep"){
-      depth <- sample.info[patient.id,]$`Coverage.WGS.CD34+.1` + sample.info[patient.id,]$`Coverage.WGS.CD34+.2` 
-      if(depth==0){next}
+      depth <- as.numeric(sample.info[patient.id,]$`Coverage.WGS.CD34+.1` + sample.info[patient.id,]$`Coverage.WGS.CD34+.2` )
+      if(is.na(depth) | depth==0){next}
       snvs <- list(snvs.cd34.deep[[patient.id]])
       min.vaf <- 0.02
       min.clone.size <- 0.01
       min.prior.size <- 0.001
     }else{
-      depth <- sample.info[patient.id,]$Coverage.WGS.PB.granulocytes
-      if(depth==0){next}
+      depth <- as.numeric(sample.info[patient.id,]$Coverage.WGS.PB.granulocytes)
+      if(is.na(depth) | depth==0){next}
       snvs <- list(snvs.pb_gran[[patient.id]])
     }
 
@@ -89,33 +90,22 @@ for(patient.id in patient.ids){
 
     if(sort == "CD34"){
       sort.type = "CD34+"
-    }else if(sort == "MNC_minus_T"){
-      sort.type = "MNC_minus_T"
+    }else if(sort == "MNC-T"){
+      sort.type = "MNC(-T)"
     }else if(sort=="MNC"){
       sort.type = "MNC"
-    }else if(sort=="PB_gran"){
+    }else if(sort=="PB"){
       sort.type="PB_gran"
     }else if(sort=="CD34_deep"){
       sort.type="CD34+_deep"
     }
 
     ## get the drivers associated with this case
-    driver.information <- putative.drivers[putative.drivers$mutation_in_any_control<=5,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
-                                                                                         colnames(putative.drivers)[grep(sort.type, colnames(putative.drivers))])]
-    if(sort.type=="CD34+"){
-      driver.information <- driver.information[,colnames(driver.information)[grep( "_CD38", colnames(driver.information), invert = T)]]
-      driver.information <- driver.information[,colnames(driver.information)[grep( "deep", colnames(driver.information), invert = T)]]
-    }else if(sort.type == "CD34+_deep"){
-      driver.information <- putative.drivers[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
-                                                colnames(putative.drivers)[grepl("CD34", colnames(putative.drivers)) &
-                                                                             grepl("deep", colnames(putative.drivers))])]
-      
-    }
-    driver.information <- driver.information[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
-                                                colnames(driver.information)[grep(paste0(patient.id, "_"), colnames(driver.information))])]
+    driver.information <- putative.drivers[,c("FORMAT","CHROM", "POS", "REF", "ALT", "GENE", "AAchange",paste0(patient.id, "_", sort.type))]
+
     if(any(grepl(paste0(patient.id, "_"), colnames(driver.information)))){
-      driver.information$VAF <- Extract.info.from.vcf(driver.information, info="VAF", type="snvs", mutationcaller="mpileup", sample.col.mpileup = colnames(driver.information)[grep(paste0(patient.id, "_"), colnames(driver.information))])
-      driver.information$Depth <- Extract.info.from.vcf(driver.information, info="depth", type="snvs", mutationcaller="mpileup", sample.col.mpileup = colnames(driver.information)[grep(paste0(patient.id, "_"), colnames(driver.information))])
+      driver.information$VAF <- Extract.info.from.vcf(driver.information, info="VAF", type="snvs", mutationcaller="mpileup", sample.col.mpileup = paste0(patient.id, "_", sort.type))
+      driver.information$Depth <- Extract.info.from.vcf(driver.information, info="depth", type="snvs", mutationcaller="mpileup", sample.col.mpileup = paste0(patient.id, "_", sort.type))
       driver.information$nvar <- driver.information$VAF*driver.information$Depth
       driver.information <- driver.information[driver.information$nvar>2 &
                                                  driver.information$Depth > 1/3*depth,,drop=F]
@@ -128,7 +118,7 @@ for(patient.id in patient.ids){
     }
 
     ## subset on drivers in "TET2", "DNMT3A", "ASXL1" and, in T2, KMT2D - the others are putative drivers with unknown consequences
-    driver.information <- driver.information[driver.information$GENE %in% c("DNMT3A", "TET2", "ASXL1") |
+    driver.information <- driver.information[driver.information$VAF!=1 & driver.information$GENE %in% c("DNMT3A", "TET2", "ASXL1") |
                                                (driver.information$GENE == "KMT2D" & patient.id == "T2"),]
 
     ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ###### ######
@@ -139,24 +129,26 @@ for(patient.id in patient.ids){
     # the model converts the prior distribution for t_s and s into absolute values to match clones within the limits of min.prior.size and N. We here convert the parameter estimates accordingly.
     fits$par_t_s_absolute <- apply(fits, 1, function(x){
       min.t.s <- 0
-      max.t.s <- age - log(0.01*10^as.numeric(x["par_N"]))/10^as.numeric(x["par_lambda_ss"])
-
+      max.t.s <- age - log(min.prior.size*10^as.numeric(x["par_N"]))/10^as.numeric(x["par_lambda_ss"])
+      
       t.s <- min.t.s +as.numeric(x["par_t_s"])*(max.t.s - min.t.s)
     })
-
+    
+    
     fits$par_s_absolute <- apply(fits, 1, function(x){
       ts <- as.numeric(x["par_t_s_absolute"])
-
+      
       min.s <- (10^as.numeric(x["par_lambda_ss"])*(age-ts) - log(10^as.numeric(x["par_N"])))/(10^as.numeric(x["par_lambda_ss"])*
-                                                                                                                (age-ts))
+                                                                                                (age-ts))
       if(min.s < 0){
         min.s <- 0
       }
-      max.s <- (10^as.numeric(x["par_lambda_ss"])*(age-ts) - log(0.01*10^as.numeric(x["par_N"])))/(10^as.numeric(x["par_lambda_ss"])*(age-ts))
-
+      max.s <- (10^as.numeric(x["par_lambda_ss"])*(age-ts) - log(min.prior.size*10^as.numeric(x["par_N"])))/(10^as.numeric(x["par_lambda_ss"])*(age-ts))
+      
       s <- min.s + as.numeric(x["par_s"])*(max.s-min.s)
-
+      
     })
+    
 
     fits$size_of_clone <- exp(10^fits$par_lambda_ss*(1-fits$par_s_absolute)*(age - fits$par_t_s_absolute))/10^fits$par_N
 
@@ -411,8 +403,8 @@ for(patient.id in patient.ids){
       max.pred<- apply(sim, 2, quantile, p=0.975)
       min.pred<- apply(sim, 2, quantile, p=0.025)
 
-      data.vs.prediction <- data.frame(VAF=rep(vafs.of.interest), mean=mySumStatData$mutation.count[[1]],
-                                       sd= mySumStatData$sampled.sd[[1]],
+      data.vs.prediction <- data.frame(VAF=rep(vafs.of.interest), mean.data=mySumStatData$mutation.count[[1]],
+                                       sd.data= mySumStatData$sampled.sd[[1]],
                                        min.model= min.pred, max.model=max.pred,
                                        Age=mySumStatData$age/365)
 
@@ -429,8 +421,8 @@ for(patient.id in patient.ids){
 
     max.y <- max(to.plot$max.model)
 
-    p <- ggplot(data=to.plot, aes(x=VAF, y=mean, ymin=mean-sd, ymax=mean+sd)) +
-      geom_ribbon(data=to.plot, aes(x=VAF, y=mean.bm, ymin=min.model,ymax=max.model), alpha=1, fill=model.colors["selection"]) + ggtitle(sort.type)+
+    p <- ggplot(data=to.plot, aes(x=VAF, y=mean.data, ymin=mean.data-sd.data, ymax=mean.data+sd.data)) +
+      geom_ribbon(data=to.plot, aes(x=VAF, y=mean.data, ymin=min.model,ymax=max.model), alpha=1, fill=model.colors["selection"]) + ggtitle(sort.type)+
       geom_pointrange(lwd=0.25, shape=1, fatten=1) + scale_y_continuous(name="Cumulative # of variants") +
       scale_x_continuous(limits=c(0, 0.6))
 
@@ -443,21 +435,21 @@ for(patient.id in patient.ids){
 
     print(p)
 
-    xlimits <- c(0,20)
+    xlimits <- c(0,1/min.vaf)
 
-    p <- ggplot(data=to.plot, aes(x=1/VAF, y=mean, ymin=mean-sd, ymax=mean+sd)) +
-      geom_ribbon(data=to.plot, aes(x=1/VAF, y=mean, ymin=min.model,ymax=max.model), alpha=1,
+    p <- ggplot(data=to.plot, aes(x=1/VAF, y=mean.data, ymin=mean.data-sd.data, ymax=mean.data+sd.data)) +
+      geom_ribbon(data=to.plot, aes(x=1/VAF, y=mean.data, ymin=min.model,ymax=max.model), alpha=1,
                   fill=sample.color[sort.type]) +
       ggtitle(paste(sample.info[patient.id,]$Paper_ID, sort.type))+
       geom_pointrange(lwd=0.25, shape=1, fatten=1) +
       scale_y_continuous(name="Cumulative # of mutations") + theme(aspect.ratio = 1) +
-      scale_x_continuous(limits=xlimits, breaks = c(5, 10, 20), labels = c("0.2", "0.1", "0.05"), name = "Variant allele frequency") +
+      scale_x_continuous(limits=xlimits, breaks = c(5, 10, 20, 50), labels = c("0.2", "0.1", "0.05", "0.02"), name = "Variant allele frequency") +
       coord_cartesian(ylim=c(0, max.y))
 
     if(nrow(driver.information[driver.information$upper>=1/max(xlimits),])>0){
 
       driver.information$y <- sapply(driver.information$VAF, function(x){
-        to.plot[min(which(to.plot$VAF >= x)),]$max.model.BM
+        to.plot[min(which(to.plot$VAF >= x)),]$max.model
       })
 
       p <- p + geom_point(data = driver.information[driver.information$upper>=1/max(xlimits),], aes(x = 1/as.numeric(VAF), y = y), col="firebrick", inherit.aes = F) +
@@ -467,7 +459,7 @@ for(patient.id in patient.ids){
                   size=6 ,  fontface="italic", inherit.aes = F)
     }
 
-    if(nrow(fits.selection)>0){
+    if(model.support.selection[sort, patient.id] > 15){
 
       p <- p + geom_ribbon(data = data.frame(x = unlist(hdinterval.selection[hdinterval.selection$Parameter=="size_of_clone",c("lower", "upper")]),
                                              ymin = c(0,0),
@@ -503,30 +495,34 @@ selection.no.driver.270 <-  intersect(c(chip.samples.unknown.driver, normal.samp
 
 
 ####################################################################################################################################################
-## Figures 4c/ 5a / 6c / S6, S7a/b: plot the model fits stratified by type
+## Figures 4c/ 5a / 5k / S6, S7a/b: plot the model fits stratified by type
 
 # no known CH driver, 90x:
 pdf(paste0(analysis.directory, "/Figures/Figure_4c_S6a.pdf"), width=8, height=8)
 
-ggarrange(plotlist=plotlist.model.vs.data[paste(names(plotlist.model.vs.data)[
-  grepl("N", names(plotlist.model.vs.data)) | grepl("U", names(plotlist.model.vs.data))], "CD34+")],
+ggarrange(plotlist=plotlist.model.vs.data[names(plotlist.model.vs.data)[
+  grepl("CD34+", names(plotlist.model.vs.data)) & ! grepl("deep", names(plotlist.model.vs.data)) &
+  (grepl("N", names(plotlist.model.vs.data)) | grepl("U", names(plotlist.model.vs.data)))]],
           nrow=6, ncol=6)
 dev.off()
 
 # no known CH driver, 2700x:
-pdf(paste0(analysis.directory, "/Figures/Figure_6b.pdf"), width=8, height=8)
+pdf(paste0(analysis.directory, "/Figures/Figure_5k.pdf"), width=8, height=8)
 
-ggarrange(plotlist=plotlist.model.vs.data[paste(names(plotlist.model.vs.data)[
-  grepl("N", names(plotlist.model.vs.data)) | grepl("U", names(plotlist.model.vs.data))], "CD34+_deep")],
+ggarrange(plotlist=plotlist.model.vs.data[names(plotlist.model.vs.data)[
+  grepl("deep", names(plotlist.model.vs.data)) &
+  (grepl("N", names(plotlist.model.vs.data)) | grepl("U", names(plotlist.model.vs.data)))]],
   nrow=6, ncol=6)
+
 dev.off()
 
 
 # known CH driver, 90x:
 pdf(paste0(analysis.directory, "/Figures/Figure_5a_S7a.pdf"), width=8, height=8)
 
-ggarrange(plotlist=plotlist.model.vs.data[paste(names(plotlist.model.vs.data)[
-  !grepl("N", names(plotlist.model.vs.data)) & !grepl("U", names(plotlist.model.vs.data))], "CD34+")],
+ggarrange(plotlist=plotlist.model.vs.data[names(plotlist.model.vs.data)[
+  grepl("CD34", names(plotlist.model.vs.data)) & !grepl("deep", names(plotlist.model.vs.data)) & 
+  (!grepl("N", names(plotlist.model.vs.data)) & !grepl("U", names(plotlist.model.vs.data)))]],
   nrow=6, ncol=6)
 
 dev.off()
@@ -534,8 +530,9 @@ dev.off()
 # known CH driver, 270x
 pdf(paste0(analysis.directory, "/Figures/Figure_6c.pdf"), width=8, height=8)
 
-ggarrange(plotlist=plotlist.model.vs.data[paste(names(plotlist.model.vs.data)[
-  !grepl("N", names(plotlist.model.vs.data)) & !grepl("U", names(plotlist.model.vs.data))], "CD34+")],
+ggarrange(plotlist=plotlist.model.vs.data[names(plotlist.model.vs.data)[
+  grepl("deep", names(plotlist.model.vs.data)) &
+  (!grepl("N", names(plotlist.model.vs.data)) & !grepl("U", names(plotlist.model.vs.data)))]],
   nrow=6, ncol=6)
 
 dev.off()
@@ -544,7 +541,7 @@ dev.off()
 
 pdf(paste0(analysis.directory, "/Figures/Figure_6c_U8_zoom.pdf"), width=3.5, height=3.5)
 
-plotlist.model.vs.data$`U6 CD34` +
+plotlist.model.vs.data$`U8 CD34+` +
   scale_x_continuous( breaks = c(1/0.5, 1/0.4, 1/0.3, 1/0.2), labels = c("0.5", "0.4", "0.3", "0.2"), name="Variant allele frequency") +
   scale_y_continuous( breaks=seq(0,15), labels=c("0", "", "", "", "", "5", "", "", "", "", "10", "", "", "", "", "15"), name = "Number of SSNVs") +
   coord_cartesian(ylim=c(0, 15), xlim=c(1/0.5, 1/0.2))
@@ -553,12 +550,12 @@ dev.off()
 
 ## estimate time point of clone emergence: ~5-6 SSNVs
 
-n.div <- 6/selected.parameters[selected.parameters$Paper_ID=="U6" & selected.parameters$Sort=="CD34" &
+n.div <- 6/selected.parameters[selected.parameters$Paper_ID=="U8" & selected.parameters$Sort=="CD34" &
                                  selected.parameters$Parameter=="par_mu" ,c("lower", "Median", "upper")]
 
 
 ####################################################################################################################################################
-## Fig. 4b,d 5b, 6a, Supplementary Figures 3: plot the posterior probability for the neutral and the selection model for each sample
+## Fig. 4b,d 5b, 5i, Supplementary Figures 3: plot the posterior probability for the neutral and the selection model for each sample
 
 to.plot <- melt(t(model.support.selection), value.name = "P_selection")
 colnames(to.plot)[c(1,2)] <- c("Patient", "Sort")
@@ -566,7 +563,7 @@ to.plot$P_neutral <- 100 - to.plot$P_selection
 to.plot <- melt(to.plot, value.name = "Posterior probability")
 to.plot$Sort <- as.character(to.plot$Sort)
 to.plot$Clone_size <- apply(to.plot, 1, function(x){
-  res <- selected.parameters[selected.parameters$Sort==x[1] & selected.parameters$Parameter=="size_of_clone" &
+  res <- selected.parameters[selected.parameters$Paper_ID==x[1] & selected.parameters$Parameter=="size_of_clone" &
                         selected.parameters$Sort==x[2] & x[3]=="P_selection",]$Median
   if(length(res)==0){
     return(0)}else{
@@ -574,7 +571,7 @@ to.plot$Clone_size <- apply(to.plot, 1, function(x){
     }
 })
 
-to.plot$Sort <- factor(to.plot$Sort, levels = c("CD34", "CD34_deep", "MNC_minus_T", "MNC", "PB_gran"))
+to.plot$Sort <- factor(to.plot$Sort, levels = c("CD34", "CD34_deep", "MNC-T", "MNC", "PB"))
 to.plot$variable <- factor(to.plot$variable, levels=c("P_neutral", "P_selection"))
 to.plot$Clone_size[to.plot$Clone_size==0] <- NA
 to.plot$ID <- sample.info[as.character(to.plot$Patient),]$Paper_ID
@@ -614,7 +611,7 @@ pdf(paste0(analysis.directory, "/Figures/Figures_5b.pdf"), width=6, height=6)
 
 # 90x
 to.plot.selected <- to.plot[to.plot$Sort=="CD34" & !is.na(to.plot$`Posterior probability`)  & 
-                              to.plot$ID %in% sample.info[!sample.info$CH.driver.found == "yes",]$Paper_ID,]
+                              to.plot$ID %in% sample.info[sample.info$CH.driver.found == "yes",]$Paper_ID,]
 ggplot(to.plot.selected,
        aes(x=ID, y=`Posterior probability`, fill=Clone_size)) + geom_col(width=0.5, col="black") +
   scale_fill_gradientn(colors=hcl.colors(n = 7, palette="Zissou 1"), breaks=c(0.05, 0.10, 0.25, 0.50), trans="log10", limits=c(0.025, 1)) +
@@ -622,7 +619,7 @@ ggplot(to.plot.selected,
 
 # 270x
 to.plot.selected <- to.plot[to.plot$Sort=="CD34_deep" & !is.na(to.plot$`Posterior probability`)  & 
-                              to.plot$ID %in% sample.info[!sample.info$CH.driver.found == "yes",]$Paper_ID,]
+                              to.plot$ID %in% sample.info[sample.info$CH.driver.found == "yes",]$Paper_ID,]
 
 ggplot(to.plot.selected,
        aes(x=ID, y=`Posterior probability`, fill=Clone_size)) + geom_col(width=0.5, col="black") +
@@ -633,7 +630,7 @@ dev.off()
 
 ## samples with unknown CH driver
 
-pdf(paste0(analysis.directory, "/Figures/Figures_6bd.pdf"), width=6, height=6)
+pdf(paste0(analysis.directory, "/Figures/Figures_5i.pdf"), width=6, height=6)
 
 # 90x
 to.plot.selected <- to.plot[to.plot$Sort=="CD34" & !is.na(to.plot$`Posterior probability`)  & 
@@ -659,7 +656,7 @@ dev.off()
 pdf(paste0(analysis.directory, "/Figures/Supplementary_Figure_3.pdf"), width=6, height=6)
 
 to.plot <- to.plot[!is.na(to.plot$`Posterior probability`),]
-to.plot <- to.plot[to.plot$ID %in% names(table(to.plot$ID))[table(to.plot$ID)==2*4],] # select samples with all 4 sorts sequenced
+to.plot <- to.plot[to.plot$ID %in% names(table(to.plot$ID))[table(to.plot$ID)==2*5],] # select samples with all 4 sorts sequenced
 
 ggplot(to.plot, aes(x=Sort, y=`Posterior probability`, fill=Clone_size)) + geom_col(width=0.5, col=NA) +
   facet_rep_wrap(~ID) +   geom_hline(yintercept = 15, linetype=2)+
@@ -720,17 +717,13 @@ for(i in sample.info$Paper_ID[sample.info$CH.driver.found=="no" &
 
 pdf(paste0(analysis.directory, "/Figures/Figure_4a.pdf"), width=3.5, height=3.5)
 
-ggplot(to.plot[to.plot$Depth==90,], aes(x=1/VAF, y=MutationCount, col=Age, group=Paper_ID)) + geom_point() + geom_line() +
-  scale_color_gradientn(colors=hcl.colors(n=7, palette="Zissou 1"), limits=c(25, 80)) +
-  scale_x_continuous(breaks = c(5, 10, 20), labels = c("0.2", "0.1", "0.05"), name="Variant allele frequency") +
-  theme(aspect.ratio = 1)+ ggtitle("CD34, 90x")
-
+# stratify by age
+to.plot$BinAge <- floor(to.plot$Age/10)*10
 ggplot(to.plot, aes(x=1/VAF, y=MutationCount, col=Age, group=paste(Paper_ID, Depth), 
                     linetype = factor(Depth))) + geom_point() + geom_line() +
   scale_color_gradientn(colors=hcl.colors(n=7, palette="Zissou 1"), limits=c(25, 80)) +
   scale_x_continuous(breaks = c(1/0.2, 1/0.1, 1/0.05, 1/0.02), labels = c("0.2", "0.1", "0.05", "0.02"), name="Variant allele frequency") +
-  theme(aspect.ratio = 0.02/0.05)+ ggtitle("CD34, 90x and 270x")
-
+  theme(aspect.ratio = 0.02/0.05)+ facet_wrap(~BinAge, scales = "free_y", ncol = 1)
 
 dev.off()
 
@@ -843,7 +836,7 @@ dev.off()
 
 to.plot <- selected.parameters[selected.parameters$Parameter=="size_of_clone" &
                                  selected.parameters$Sort == "CD34" & 
-                                 selected.paramters$Depth %in% c(90, 120),]
+                                 selected.parameters$Depth %in% c(90, 120),]
 to.plot$CHIP.mutation <- apply(to.plot, 1, function(x){
   as.character(sample.info[as.character(x["Paper_ID"]),"CHIP.mutation.associated.with.fit"])
 })
@@ -854,11 +847,9 @@ to.plot$Driver.mean <- apply(to.plot, 1, function(x){
   
   type <- "CD34+"
   
-  driver.information <- putative.drivers[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
-                                            colnames(putative.drivers)[grep(type, colnames(putative.drivers))])]
-  driver.information <- driver.information[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
-                                              colnames(driver.information)[grep(paste0(x["Paper_ID"], "_"), colnames(driver.information))])]
-  driver.information$VAF <- Extract.info.from.vcf(driver.information, info="VAF", mutationcaller = "mpileup", sample.col.mpileup = ncol(driver.information))
+  driver.information <- putative.drivers[,c("FORMAT", "CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
+                                            paste(x["Paper_ID"], type, sep="_"))]
+  driver.information$VAF <- Extract.info.from.vcf(driver.information, info="VAF", mutationcaller = "mpileup", sample.col.mpileup = paste(x["Paper_ID"], type, sep="_"))
   driver.information <- driver.information[driver.information$VAF>0 & driver.information$GENE==as.character(sample.info[as.character(x["Paper_ID"]),"CHIP.mutation.associated.with.fit"]),,drop=F]
   
   driver.information <- driver.information[driver.information$VAF < 0.9,]
@@ -872,15 +863,10 @@ to.plot$Driver.mean <- apply(to.plot, 1, function(x){
 to.plot$Driver.min <- apply(to.plot, 1, function(x){
   
   type <- "CD34+"
-  sample.col <- colnames(putative.drivers)[grepl(x["Paper_ID"], colnames(putative.drivers)) & 
-                                             grepl("CD34", colnames(putative.drivers)) &
-                                             !grepl("deep", colnames(putative.drivers))]
-  
+  sample.col <-  paste(x["Paper_ID"], type, sep="_")
 
-  driver.information <- putative.drivers[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
-                                            colnames(putative.drivers)[grep(type, colnames(putative.drivers))])]
-  driver.information <- driver.information[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
-                                              colnames(driver.information)[grep(paste0(x["Paper_ID"], "_"), colnames(driver.information))])]
+  driver.information <- putative.drivers[,c("FORMAT", "CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
+                                            sample.col)]
   driver.information$VAF <- Extract.info.from.vcf(driver.information, info="VAF", mutationcaller = "mpileup", sample.col.mpileup = sample.col)
   driver.information$Depth <- Extract.info.from.vcf(driver.information, info="depth", mutationcaller = "mpileup", sample.col.mpileup = sample.col)
   driver.information <- driver.information[driver.information$VAF>0 & driver.information$GENE==as.character(sample.info[as.character(x["Paper_ID"]),"CHIP.mutation.associated.with.fit"]),,drop=F]
@@ -900,14 +886,10 @@ to.plot$Driver.min <- apply(to.plot, 1, function(x){
 to.plot$Driver.max <- apply(to.plot, 1, function(x){
 
   type <- "CD34+"
-  sample.col <- colnames(putative.drivers)[grepl(x["Paper_ID"], colnames(putative.drivers)) & 
-                                             grepl("CD34", colnames(putative.drivers)) &
-                                             !grepl("deep", colnames(putative.drivers)) ]
+  sample.col <- paste(x["Paper_ID"], type, sep="_")
 
-  driver.information <- putative.drivers[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
-                                            colnames(putative.drivers)[grep(type, colnames(putative.drivers))])]
-  driver.information <- driver.information[,c("CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
-                                              colnames(driver.information)[grep(paste0(x["Paper_ID"], "_"), colnames(driver.information))])]
+  driver.information <- putative.drivers[,c("FORMAT", "CHROM", "POS", "REF", "ALT", "GENE", "AAchange",
+                                            sample.col)]
   driver.information$VAF <- Extract.info.from.vcf(driver.information, info="VAF", mutationcaller = "mpileup", sample.col.mpileup = sample.col)
   driver.information$Depth <- Extract.info.from.vcf(driver.information, info="depth", mutationcaller = "mpileup", sample.col.mpileup = sample.col)
   driver.information <- driver.information[driver.information$VAF>0 & driver.information$GENE==as.character(sample.info[as.character(x["Paper_ID"]),"CHIP.mutation.associated.with.fit"]),,drop=F]
@@ -930,7 +912,7 @@ pdf(paste0(analysis.directory, "Figures/Figure_5c"), width=4, height = 4)
 ggplot(to.plot[to.plot$Driver.mean!=0 & !grepl("N", to.plot$Paper_ID) &
                  !grepl("U", to.plot$Paper_ID),], aes(x=Median/2, xmin = lower/2, xmax = upper/2, color=CHIP.mutation,
                                                                                             y=Driver.mean, ymin = Driver.min, ymax=Driver.max)) + geom_point() +
-  geom_errorbar() + geom_errorbarh() + scale_color_manual(values=CHIP.color) +
+  geom_errorbar(width = 0) + geom_errorbarh(height = 0) + scale_color_manual(values=CHIP.color) +
   geom_abline(slope = 1, intercept = 0, linetype=2) + 
   scale_x_continuous("VAF population genetics model") +
   scale_y_continuous("VAF WGS") + theme(aspect.ratio = 1)
@@ -1057,7 +1039,7 @@ to.plot <- rbind(neutral.parameters[grepl("N", neutral.parameters$Paper_ID) & ne
                                       sample.info[neutral.parameters$Paper_ID,]$`Coverage.WGS.CD34+.2`==0,],
                  neutral.parameters[grepl("N", neutral.parameters$Paper_ID) & neutral.parameters$Depth %in% c(270, 300),])
 to.plot <- rbind(to.plot, selected.parameters[ !grepl("N", selected.parameters$Paper_ID) & !grepl("U", selected.parameters$Paper_ID) & selected.parameters$Depth %in% c(90, 120) &
-                                                 sample.info[neutral.parameters$Paper_ID,]$`Coverage.WGS.CD34+.2`==0,],
+                                                 sample.info[selected.parameters$Paper_ID,]$`Coverage.WGS.CD34+.2`==0,],
                  selected.parameters[ !grepl("N", selected.parameters$Paper_ID) & !grepl("U", selected.parameters$Paper_ID) & selected.parameters$Depth %in% c(270, 300),])
 
 # subset on CD34
@@ -1077,7 +1059,7 @@ to.plot$Age <- unlist(sapply(unique(to.plot$Age), function(x){
   tmp$Age
 }))
 
-to.plot$Type <- ifelse(grepl("N", to.plot$Paper_ID), "N", "Selection")
+to.plot$Type <- ifelse(grepl("N", to.plot$Paper_ID), "Neutral", "Selection")
 to.plot$Type <- factor(to.plot$Type, levels=c("Neutral", "Selection"))
 
 
@@ -1105,7 +1087,7 @@ ggplot(to.plot[to.plot$Parameter=="par_lambda_ss",],
   theme(axis.text.x=element_text(angle=90)) + scale_y_log10(name ="Division rate (1/y)") +
   expand_limits(x = 0) 
 
-ggplot(to.plot[to.plot$Parameter == "par_lambda_ss"],
+ggplot(to.plot[to.plot$Parameter == "par_lambda_ss",],
        aes(x=Type, y=365*10^Median, ymin=365*10^lower, ymax=365*10^upper, col = Type)) + geom_boxplot(outlier.shape = NA) +
   geom_pointrange(position = position_dodge2(width=0.5)) + scale_color_manual(values=c(Neutral="darkgrey", Selection="red"))  +
   scale_y_log10(name ="Division rate (1/y)") 
@@ -1114,7 +1096,7 @@ dev.off()
 
 
 ####################################################################################################################################################
-## Figure 6b, size of the selected clones in cases with unknown drivers
+## Figure 5j, size of the selected clones in cases with unknown drivers
 
 molten.par <- reshape2::melt(selected.parameters[grepl("CD34", selected.parameters$Sort) & grepl("U", selected.parameters$Paper_ID) &
                                                    ((selected.parameters$Paper_ID %in% selection.no.driver.90 & selected.parameters$Depth %in% c(90, 120)) |
@@ -1124,7 +1106,7 @@ molten.par$Paper_ID <- factor(molten.par$Paper_ID,
                                 levels=unique(molten.par$Paper_ID[order(sample.info[molten.par$Paper_ID, ]$Age)]))
 
 
-pdf(paste0(analysis.directory, "Figures/Figure_6b.pdf"), width=3.5, height=2.5)
+pdf(paste0(analysis.directory, "Figures/Figure_5j.pdf"), width=3.5, height=2.5)
 
 ## Subset on the size of the clone
 to.plot <- molten.par[molten.par$Parameter == "size_of_clone",]
@@ -1145,10 +1127,12 @@ ggplot(to.plot,
 dev.off()
 
 ####################################################################################################################################################
-## Fig. 6d: Physiological parameters in selected cases
+## Fig. 5l: Physiological parameters in selected cases without known driver
 
-molten.par <- reshape2::melt(rbind(selected.parameters[(grepl("CD34", selected.parameters$Sort) & selected.parameters$Paper_ID %in% selection.no.driver.90 & selected.parameters$Depth %in% c(90, 120)) |
-                                                         (grepl("CD34", selected.parameters$Sort) & selected.parameters$Paper_ID %in% selection.no.driver.270 & selected.parameters$Depth %in% c(270, 300)),],
+molten.par <- reshape2::melt(rbind(selected.parameters[(grepl("CD34", selected.parameters$Sort) & grepl("U", selected.parameters$Paper_ID) & 
+                                                          selected.parameters$Paper_ID %in% selection.no.driver.90 &
+                                                          selected.parameters$Depth %in% c(90, 120)) |
+                                                         (grepl("CD34", selected.parameters$Sort) & grepl("U", selected.parameters$Paper_ID) & selected.parameters$Depth %in% c(270, 300)),],
                                    neutral.parameters[grepl("CD34", neutral.parameters$Sort) & neutral.parameters$Paper_ID %in% setdiff(selection.no.driver.270, selection.no.driver.90) & neutral.parameters$Depth %in% c(90, 120),]),
                              id.vars = c("Paper_ID", "lower", "upper", "Parameter", "Sort", "Depth"), value.name = "Median")
 molten.par$CHIP.mutation <- sample.info[molten.par$Paper_ID,]$CHIP.mutation.associated.with.fit
@@ -1158,7 +1142,7 @@ molten.par$Paper_ID <- factor(molten.par$Paper_ID,
                                 levels=unique(molten.par$Paper_ID[order(sample.info[molten.par$Paper_ID, ]$Age)]))
 
 
-pdf(paste0(analysis.directory, "/Figures/Figure_6_d.pdf"), width=3.5, height=3.5)
+pdf(paste0(analysis.directory, "/Figures/Figure_5l.pdf"), width=3.5, height=3.5)
 
 ## stem cell number
 to.plot <- molten.par[molten.par$Parameter == "par_N",]
@@ -1404,7 +1388,7 @@ dev.off()
 ####################################################################################################################################################
 ## Extended Data Fig. 9b/d: compare age and growth rate of the minor selected clone across the cohort
 
-selection.parameters.second.clone <- two.clone.model.parameters[two.clone.model.parameters$Parameter %in% c("growth_per_year2", "age_of_clone_2",),]
+selection.parameters.second.clone <- two.clone.model.parameters[two.clone.model.parameters$Parameter %in% c("growth_per_year2", "age_of_clone_2"),]
 
 ## for plotting, average the two 2-clone topologies, in case both topologies fit the data
 
@@ -1542,16 +1526,16 @@ dev.off()
 ## where there is evidence for only 1 selected clone and no 270x WGS data available, use the estimates from the 1-clone model on 90x data
 
 
-to.plot. <- rbind(two.clone.model.parameters[two.clone.model.parameters$Parameter %in% c("par_ts1", "par_ts2"),intersect(colnames(two.clone.parameters),
+to.plot. <- rbind(two.clone.model.parameters[two.clone.model.parameters$Parameter %in% c("par_ts1", "par_ts2"),intersect(colnames(two.clone.model.parameters),
                                                                                                                          colnames(one.clone.model.parameters))],
                   one.clone.model.parameters[one.clone.model.parameters$Parameter == "par_t_s_absolute" &
                                                !one.clone.model.parameters$Paper_ID %in% two.clone.model.parameters$Paper_ID &
-                                               one.clone.model.parameters$Sort == "CD34_deep", intersect(colnames(two.clone.parameters),
+                                               one.clone.model.parameters$Sort == "CD34_deep", intersect(colnames(two.clone.model.parameters),
                                                                                                          colnames(one.clone.model.parameters))],
                   one.clone.model.parameters[one.clone.model.parameters$Parameter == "par_t_s_absolute" &
                                                !one.clone.model.parameters$Paper_ID %in% two.clone.model.parameters$Paper_ID &
                                                sample.info[one.clone.model.parameters$Paper_ID,]$`Coverage.WGS.CD34+.2`==0 &
-                                               one.clone.model.parameters$Sort == "CD34", intersect(colnames(two.clone.parameters), colnames(one.clone.model.parameters.neutral))])
+                                               one.clone.model.parameters$Sort == "CD34", intersect(colnames(two.clone.model.parameters), colnames(one.clone.model.parameters))])
 
 ## for plotting, average the two 2-clone topologies, in case both topologies fit the data
 
