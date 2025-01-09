@@ -47,7 +47,7 @@ Download and install R v4.2.0 and the following packages on your computer:
   - dplyr v1.0.9
   - scales v1.2.1
 
-We have bundled R functions to model drift and selection in growing and homeostatic tissues in the R package SCIFER. Please download and install from (https://github.com/VerenaK90/SCIFER/tree/paper) and refer to the accompanying vignette for further information on SCIFER.
+We have bundled R functions to model drift and selection in growing and homeostatic tissues in the R package SCIFER. Please download and install from (https://github.com/VerenaK90/SCIFER) and refer to the accompanying vignette for further information on SCIFER.
 
 Download and install python3 and pyABC von your computer.
 
