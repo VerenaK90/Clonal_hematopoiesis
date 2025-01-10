@@ -199,10 +199,10 @@ As with the pseudo-bulk data, extract .csv-files from the .db files using the fu
 
 This script sources the files [Assess_fits_heme_WGS_data.R](Analysis_and_figures/Assess_fits_heme_WGS_data.R), [Assess_fits_heme_WGS_data_2_clone_model.R](Analysis_and_figures/Assess_fits_heme_WGS_2_clone_model.R) and [Assess_fits_heme_WGS_data_no_size_compensation.R](Analysis_and_figures/Assess_fits_heme_WGS_data_no_size_compensation.R) to integrate/compare model fits between different models. Moreover, it
 - plots data only for the neutral cases (**Fig. 5a**)
-- plots model vs data for each sample (as shown in **Figs. 4a/b, 5d, Extended Data Fig. 6, Extended Data Fig. 7a-c,e, Extended Data Fig. 8a,b**)
-- classifies individual cases as neutrally evolving or selected (as shown in **Figs. 4c-e, 5b,c, Supplementary Fig. 3**)
-- compares estimated clone sizes to VAFs of known drivers (**Fig. 4f**)
-- computes highest density estimates for the parameters (as shown in **Fig. 4g/h, 5e-h, 7a-c, Extended Data Fig. 7e, Fig.6a-c, Extended Data Fig. 9**)
+- plots model vs data for each sample (as shown in **Figs. 4a/e, 5d, Extended Data Fig. 7a-c,e, Extended Data Fig. 8a,b**)
+- classifies individual cases as neutrally evolving or selected (as shown in **Figs. 4b,c,f, 5b,c, Supplementary Fig. 3**)
+- compares estimated clone sizes to VAFs of known drivers (**Fig. 4d**)
+- computes highest density estimates for the parameters (as shown in **Fig. 4g/h, 5e-h, Extended Data Fig. 7f, Fig.6a-c, Extended Data Fig. 9**)
 - compares the estimated parameters between samples with and without selection (as shown in **Fig. 5i-k**)
 - computes the cumulative age-incidence of CH driver acquisition (**Fig. 6d**)
 
