@@ -12,7 +12,7 @@ This repository contains code to reproduce analysis in Körber et al., Detecting
 - [Bulk WGS data from human brain](#bulk-WGS-data-from-human-brain)
   This section explains how the model was applied to published bulk WGS data from human brain.
   
-To reproduce (parts of) the analysis, please download the supplementary tables, the associated data from Mendeley (doi: 10.17632/yvxdb7t3yk.1) and adjust the directories in [Settings.R](Settings.R). Refer to [Before you start](#before-you-start) for a list of R libraries that should be installed.
+To reproduce (parts of) the analysis, please download the supplementary tables, the associated data from Mendeley (doi: 10.17632/gkzvmg5f6z.1) and adjust the directories in [Settings.R](Settings.R). Refer to [Before you start](#before-you-start) for a list of R libraries that should be installed.
 
 ## Before you start
 
