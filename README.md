@@ -51,7 +51,7 @@ We have bundled R functions to model drift and selection in growing and homeosta
 
 Download and install python3 and pyABC von your computer.
 
-Associated data can be found on Mendeley (doi: 10.17632/yvxdb7t3yk.1).
+Associated data can be found on Mendeley (doi: 10.17632/gkzvmg5f6z.1).
 
 To reproduce the analysis, please check the file structure and make sure the required scripts and input files are in the correct location.
 
@@ -95,7 +95,7 @@ We tested our model on pseudo-bulk WGS data from published single-cell WGS data 
 ### Generation of pseudo-bulk data 
 
 #### Lee-Six et al.
-Download the data from https://doi.org/10.17632/yzjw2stk7f.1 and store them in ./Published_data/Lee-Six_et_al/Caveman/. In addition, download the re-called data from our repository (https://doi.org/10.17632/yvxdb7t3yk.1) and store them in ./Lee-Six_et_al/Mutect_Strelka.
+Download the data from https://doi.org/10.17632/yzjw2stk7f.1 and store them in ./Published_data/Lee-Six_et_al/Caveman/. In addition, download the re-called data from our repository (https://doi.org/10.17632/gkzvmg5f6z.1) and store them in ./Lee-Six_et_al/Mutect_Strelka.
 
 The script [Pseudo_VAFs_LeeSix_et_al.R](Data_preprocessing/Pseudo_VAFs_LeeSix_et_al.R) first compares the results of Caveman and Mutect/Strelka (**Extended Data Fig. 3b,c**). Thereafter, it generates the pseudo-bulk data and plots the VAF distributions as shown in **Fig. 3b, Extended Data Fig. 3d**. Finally, it stores two list objects containing the VAFs in [Caveman/SNVs.RData](RData/Lee-Six_et_al/Caveman/SNVs.RData) and [Mutect_Strelka/SNVs.RData](RData/Lee-Six_et_al/Mutect_Strelka/SNVs.RData). Alternatively, these objects can be directly downloaded from Mendeley.
 
